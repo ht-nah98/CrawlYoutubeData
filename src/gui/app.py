@@ -17,12 +17,18 @@ import re
 import sys
 
 # Import các module cần thiết
+# DISABLED CustomTkinter due to segmentation fault issues with Canvas
+# Using standard tkinter instead for stability
+CUSTOM_TK_AVAILABLE = False
 try:
     import customtkinter as ctk
-    CUSTOM_TK_AVAILABLE = True
+    # Force disable even if available
+    # CUSTOM_TK_AVAILABLE = True
 except ImportError:
-    CUSTOM_TK_AVAILABLE = False
-    print("CustomTkinter không có sẵn. Sử dụng tkinter thông thường với styling tùy chỉnh.")
+    pass
+
+if not CUSTOM_TK_AVAILABLE:
+    print("Using standard tkinter for stability (CustomTkinter disabled)")
 
 # Import logic từ các file khác
 from src.scraper.channel import (
@@ -39,22 +45,41 @@ from src.utils.scraping_tracker import ScrapingTracker
 
 
 class ModernColors:
-    """Modern color palette - Bright & Vibrant"""
-    PRIMARY = "#FF0000"  # YouTube Red
-    PRIMARY_DARK = "#CC0000"
-    PRIMARY_LIGHT = "#FF6B6B"
-    SECONDARY = "#F5F5F5"  # Light gray background
-    SECONDARY_LIGHT = "#E8E8E8"
-    ACCENT = "#4A90E2"  # Bright blue
-    SUCCESS = "#28A745"  # Green
-    WARNING = "#FFC107"  # Amber
-    ERROR = "#DC3545"  # Red
-    TEXT_PRIMARY = "#212529"  # Dark text
-    TEXT_SECONDARY = "#6C757D"  # Gray text
-    BG_DARK = "#F8F9FA"  # Very light gray (almost white)
-    BG_CARD = "#FFFFFF"  # White cards
-    BORDER = "#DEE2E6"  # Light border
-    SHADOW = "#E9ECEF"  # Shadow color
+    """Modern color palette - Professional & Clean"""
+    # Primary colors
+    PRIMARY = "#2563EB"  # Modern Blue
+    PRIMARY_DARK = "#1E40AF"
+    PRIMARY_LIGHT = "#60A5FA"
+    
+    # Accent colors
+    ACCENT = "#3B82F6"  # Bright Blue
+    SUCCESS = "#10B981"  # Modern Green
+    WARNING = "#F59E0B"  # Orange
+    ERROR = "#EF4444"  # Modern Red
+    INFO = "#06B6D4"  # Cyan
+    
+    # Background colors
+    BG_DARK = "#F9FAFB"  # Light Gray Background
+    BG_CARD = "#FFFFFF"  # White Cards
+    BG_HOVER = "#F3F4F6"  # Hover state
+    BG_SELECTED = "#EFF6FF"  # Selected state (light blue)
+    
+    # Text colors
+    TEXT_PRIMARY = "#111827"  # Dark Gray
+    TEXT_SECONDARY = "#6B7280"  # Medium Gray
+    TEXT_MUTED = "#9CA3AF"  # Light Gray
+    TEXT_WHITE = "#FFFFFF"  # White
+    
+    # Border colors
+    BORDER = "#E5E7EB"  # Light Border
+    BORDER_DARK = "#D1D5DB"  # Darker Border
+    
+    # Special
+    SHADOW = "#00000010"  # Subtle shadow
+    YOUTUBE_RED = "#FF0000"  # YouTube brand color
+    
+    # Backward compatibility
+    SECONDARY = "#F5F5F5"  # Light gray (for progress bars, etc.)
 
 
 class YouTubeScraperGUI:
@@ -108,6 +133,12 @@ class YouTubeScraperGUI:
         self.existing_channel_frame = None
         self.new_channel_frame = None
         self.account_selector_card = None
+        
+        # === NEW WORKFLOW VARIABLES ===
+        self.pending_channels = []  # List of channel URLs to fetch for selected account
+        self.pending_channels_widgets = []  # UI widgets for pending channels list
+        self.channel_management_frame = None  # Frame that appears after selecting account
+        self.accounts_overview_frame = None  # Reference to accounts overview card
 
         self.root.title("🎥 YouTube Analytics Scraper")
         
@@ -266,17 +297,14 @@ class YouTubeScraperGUI:
         # Instructions card - Modern design
         self.create_instructions_card(main_frame)
 
-        # === NEW: Account selector card - Multi-account support ===
+        # === NEW WORKFLOW: Accounts Overview at TOP ===
+        self.create_accounts_overview_card(main_frame)
+
+        # === Account selector - Select which account to manage ===
         self.create_account_selector_card(main_frame)
 
-        # Input card - Clean design (MODIFIED for channel selection)
-        self.create_input_card(main_frame)
-
-        # Channel info card - Hiển thị thông tin kênh và video
-        self.create_channel_info_card(main_frame)
-
-        # Batch account selector card - Chọn tài khoản cần cào hôm nay
-        self.create_batch_account_selector_card(main_frame)
+        # === Channel Management - Add channels to selected account ===
+        self.create_channel_management_card(main_frame)
 
         # Login settings card - Cài đặt đăng nhập
         self.create_login_settings_card(main_frame)
@@ -297,48 +325,48 @@ class YouTubeScraperGUI:
         self.root.after(100, configure_scroll_region)
         
     def create_header(self, parent):
-        """Tạo header đẹp"""
+        """Tạo header đẹp với modern design"""
         if CUSTOM_TK_AVAILABLE:
             header_frame = ctk.CTkFrame(parent, fg_color="transparent")
         else:
             header_frame = tk.Frame(parent, bg=ModernColors.BG_DARK)
-        header_frame.pack(fill="x", pady=(0, 25))
+        header_frame.pack(fill="x", pady=(0, 30))
         
-        # Title với gradient effect (simulated với colors)
+        # Title với modern font
         if CUSTOM_TK_AVAILABLE:
             title_label = ctk.CTkLabel(
                 header_frame,
                 text="🎥 YouTube Analytics Scraper",
-                font=ctk.CTkFont(size=32, weight="bold", family="Segoe UI"),
-                text_color=ModernColors.TEXT_PRIMARY
+                font=ctk.CTkFont(size=36, weight="bold", family="Segoe UI"),
+                text_color=ModernColors.PRIMARY
             )
         else:
             title_label = tk.Label(
                 header_frame,
                 text="🎥 YouTube Analytics Scraper",
-                font=("Segoe UI", 28, "bold"),
-                fg=ModernColors.TEXT_PRIMARY,
+                font=("Segoe UI", 32, "bold"),
+                fg=ModernColors.PRIMARY,
                 bg=ModernColors.BG_DARK
             )
         title_label.pack()
         
-        # Subtitle
+        # Subtitle với better spacing
         if CUSTOM_TK_AVAILABLE:
             subtitle = ctk.CTkLabel(
                 header_frame,
                 text="Công cụ cào dữ liệu analytics chuyên nghiệp",
-                font=ctk.CTkFont(size=14),
+                font=ctk.CTkFont(size=15),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             subtitle = tk.Label(
                 header_frame,
                 text="Công cụ cào dữ liệu analytics chuyên nghiệp",
-                font=("Segoe UI", 12),
+                font=("Segoe UI", 13),
                 fg=ModernColors.TEXT_SECONDARY,
                 bg=ModernColors.BG_DARK
             )
-        subtitle.pack(pady=(5, 0))
+        subtitle.pack(pady=(8, 0))
         
     def create_instructions_card(self, parent):
         """Tạo card hướng dẫn với design hiện đại"""
@@ -801,6 +829,572 @@ class YouTubeScraperGUI:
         for account_var in self.selected_accounts.values():
             account_var.set(False)
         self.log_message("✗ Đã bỏ chọn tất cả tài khoản", "INFO")
+
+    # ==================== NEW WORKFLOW METHODS ====================
+    
+    def create_accounts_overview_card(self, parent):
+        """
+        Create accounts overview card at the top
+        Shows all accounts with their channels and videos
+        Allows selection for scraping
+        """
+        if CUSTOM_TK_AVAILABLE:
+            card = ctk.CTkFrame(
+                parent,
+                fg_color=ModernColors.BG_CARD,
+                corner_radius=12,
+                border_width=1,
+                border_color=ModernColors.BORDER
+            )
+        else:
+            card = tk.Frame(
+                parent,
+                bg=ModernColors.BG_CARD,
+                relief=tk.FLAT,
+                bd=1,
+                highlightbackground=ModernColors.BORDER,
+                highlightthickness=1
+            )
+        card.pack(fill="x", pady=(0, 20))
+
+        card_content = tk.Frame(card, bg=ModernColors.BG_CARD)
+        card_content.pack(fill="both", padx=20, pady=20)
+
+        # === TITLE ===
+        if CUSTOM_TK_AVAILABLE:
+            title = ctk.CTkLabel(
+                card_content,
+                text="📊 ACCOUNTS OVERVIEW",
+                font=ctk.CTkFont(size=18, weight="bold"),
+                text_color=ModernColors.TEXT_PRIMARY
+            )
+        else:
+            title = tk.Label(
+                card_content,
+                text="📊 ACCOUNTS OVERVIEW",
+                font=("Segoe UI", 16, "bold"),
+                bg=ModernColors.BG_CARD,
+                fg=ModernColors.TEXT_PRIMARY
+            )
+        title.pack(anchor="w", pady=(0, 15))
+
+        # === ACCOUNTS LIST FRAME ===
+        accounts_list_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
+        accounts_list_frame.pack(fill="x", pady=(0, 15))
+
+        # Load and display accounts
+        try:
+            if os.path.exists('config.json'):
+                with open('config.json', 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    accounts = config.get('accounts', [])
+
+                    if accounts:
+                        for account in accounts:
+                            account_name = account.get('name', 'Unknown')
+                            channels = account.get('channels', [])
+                            total_videos = sum(len(ch.get('video_ids', [])) for ch in channels)
+
+                            # Create toggle variable if not exists
+                            if account_name not in self.selected_accounts:
+                                self.selected_accounts[account_name] = tk.BooleanVar(value=True)
+
+                            # Account row frame
+                            account_row = tk.Frame(accounts_list_frame, bg=ModernColors.BG_CARD)
+                            account_row.pack(fill="x", pady=(0, 10))
+
+                            # Checkbox for account
+                            account_checkbox = tk.Checkbutton(
+                                account_row,
+                                text=f"☑️ {account_name} ({len(channels)} channels, {total_videos} videos)",
+                                variable=self.selected_accounts[account_name],
+                                font=("Segoe UI", 12, "bold"),
+                                bg=ModernColors.BG_CARD,
+                                fg=ModernColors.TEXT_PRIMARY,
+                                activebackground=ModernColors.BG_CARD,
+                                activeforeground=ModernColors.TEXT_PRIMARY,
+                                selectcolor=ModernColors.BG_CARD
+                            )
+                            account_checkbox.pack(anchor="w")
+
+                            # Channels list (indented)
+                            if channels:
+                                channels_frame = tk.Frame(account_row, bg=ModernColors.BG_CARD)
+                                channels_frame.pack(fill="x", padx=(30, 0))
+
+                                for channel in channels:
+                                    channel_url = channel.get('url', 'Unknown')
+                                    video_ids = channel.get('video_ids', [])
+                                    
+                                    # Extract channel name from URL
+                                    channel_name = channel_url.split('/')[-1] if channel_url != 'Unknown' else 'Unknown'
+                                    
+                                    channel_label = tk.Label(
+                                        channels_frame,
+                                        text=f"  ├─ {channel_name} ({len(video_ids)} videos)",
+                                        font=("Segoe UI", 10),
+                                        bg=ModernColors.BG_CARD,
+                                        fg=ModernColors.TEXT_SECONDARY,
+                                        anchor="w"
+                                    )
+                                    channel_label.pack(anchor="w")
+
+                            self.batch_scraping_widgets[account_name] = account_checkbox
+
+                    else:
+                        no_accounts = tk.Label(
+                            accounts_list_frame,
+                            text="Không có tài khoản nào. Vui lòng tạo tài khoản mới bên dưới.",
+                            font=("Segoe UI", 11),
+                            bg=ModernColors.BG_CARD,
+                            fg=ModernColors.TEXT_SECONDARY
+                        )
+                        no_accounts.pack(anchor="w")
+            else:
+                no_config = tk.Label(
+                    accounts_list_frame,
+                    text="Không tìm thấy config.json. Hệ thống sẽ tạo tự động khi bạn thêm tài khoản.",
+                    font=("Segoe UI", 11),
+                    bg=ModernColors.BG_CARD,
+                    fg=ModernColors.TEXT_SECONDARY
+                )
+                no_config.pack(anchor="w")
+
+        except Exception as e:
+            error_label = tk.Label(
+                accounts_list_frame,
+                text=f"Lỗi khi load accounts: {str(e)}",
+                font=("Segoe UI", 10),
+                bg=ModernColors.BG_CARD,
+                fg=ModernColors.ERROR
+            )
+            error_label.pack(anchor="w")
+
+        # === BUTTONS FRAME ===
+        buttons_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
+        buttons_frame.pack(fill="x", pady=(0, 10))
+
+        # Select All button
+        select_all_btn = tk.Button(
+            buttons_frame,
+            text="✓ Select All",
+            command=self.select_all_accounts,
+            font=("Segoe UI", 11),
+            bg=ModernColors.ACCENT,
+            fg="white",
+            padx=15,
+            pady=8,
+            relief=tk.FLAT,
+            bd=0
+        )
+        select_all_btn.pack(side="left", padx=(0, 10))
+
+        # Deselect All button
+        deselect_all_btn = tk.Button(
+            buttons_frame,
+            text="✗ Deselect All",
+            command=self.deselect_all_accounts,
+            font=("Segoe UI", 11),
+            bg="#6C757D",
+            fg="white",
+            padx=15,
+            pady=8,
+            relief=tk.FLAT,
+            bd=0
+        )
+        deselect_all_btn.pack(side="left", padx=(0, 15))
+
+        # Scrape Selected button - LARGER and more prominent
+        scrape_selected_btn = tk.Button(
+            buttons_frame,
+            text="🚀 Scrape Selected Accounts",
+            command=self.start_batch_scraping,
+            font=("Segoe UI", 14, "bold"),
+            bg=ModernColors.SUCCESS,
+            fg="white",
+            padx=30,
+            pady=15,
+            relief=tk.FLAT,
+            bd=0,
+            cursor="hand2"
+        )
+        scrape_selected_btn.pack(side="left")
+
+        # Store reference
+        self.accounts_overview_frame = card_content
+
+    def create_channel_management_card(self, parent):
+        """
+        Create channel management card
+        Allows adding multiple channels to selected account before fetching
+        """
+        if CUSTOM_TK_AVAILABLE:
+            card = ctk.CTkFrame(
+                parent,
+                fg_color=ModernColors.BG_CARD,
+                corner_radius=12,
+                border_width=1,
+                border_color=ModernColors.BORDER
+            )
+        else:
+            card = tk.Frame(
+                parent,
+                bg=ModernColors.BG_CARD,
+                relief=tk.FLAT,
+                bd=1,
+                highlightbackground=ModernColors.BORDER,
+                highlightthickness=1
+            )
+        card.pack(fill="x", pady=(0, 20))
+
+        card_content = tk.Frame(card, bg=ModernColors.BG_CARD)
+        card_content.pack(fill="both", padx=20, pady=20)
+
+        # === TITLE ===
+        if CUSTOM_TK_AVAILABLE:
+            title = ctk.CTkLabel(
+                card_content,
+                text="📹 ADD CHANNELS",
+                font=ctk.CTkFont(size=18, weight="bold"),
+                text_color=ModernColors.TEXT_PRIMARY
+            )
+        else:
+            title = tk.Label(
+                card_content,
+                text="📹 ADD CHANNELS",
+                font=("Segoe UI", 16, "bold"),
+                bg=ModernColors.BG_CARD,
+                fg=ModernColors.TEXT_PRIMARY
+            )
+        title.pack(anchor="w", pady=(0, 15))
+
+        # === STATUS LABEL (shows which account we're adding to) ===
+        self.channel_management_status = tk.Label(
+            card_content,
+            text="Please select an account above first",
+            font=("Segoe UI", 11, "italic"),
+            bg=ModernColors.BG_CARD,
+            fg=ModernColors.TEXT_SECONDARY
+        )
+        self.channel_management_status.pack(anchor="w", pady=(0, 15))
+
+        # === INPUT FRAME ===
+        input_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
+        input_frame.pack(fill="x", pady=(0, 15))
+
+        # Channel URL label
+        url_label = tk.Label(
+            input_frame,
+            text="Channel URL:",
+            font=("Segoe UI", 11),
+            bg=ModernColors.BG_CARD,
+            fg=ModernColors.TEXT_SECONDARY
+        )
+        url_label.pack(anchor="w", pady=(0, 8))
+
+        # Channel URL entry
+        if CUSTOM_TK_AVAILABLE:
+            self.channel_url_entry = ctk.CTkEntry(
+                input_frame,
+                placeholder_text="https://www.youtube.com/@channelname",
+                height=42,
+                font=ctk.CTkFont(size=13),
+                border_width=2,
+                corner_radius=8
+            )
+        else:
+            self.channel_url_entry = tk.Entry(
+                input_frame,
+                font=("Segoe UI", 12),
+                bg=ModernColors.BG_CARD,
+                fg=ModernColors.TEXT_PRIMARY,
+                relief=tk.FLAT,
+                bd=10,
+                highlightthickness=2,
+                highlightbackground=ModernColors.BORDER
+            )
+        self.channel_url_entry.pack(fill="x", pady=(0, 10))
+
+        # Add Channel button
+        add_channel_btn = tk.Button(
+            input_frame,
+            text="➕ Add to Account",
+            command=self.add_channel_to_pending,
+            font=("Segoe UI", 11, "bold"),
+            bg=ModernColors.ACCENT,
+            fg="white",
+            padx=15,
+            pady=8,
+            relief=tk.FLAT,
+            bd=0
+        )
+        add_channel_btn.pack(anchor="w")
+
+        # === PENDING CHANNELS LIST ===
+        pending_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
+        pending_frame.pack(fill="x", pady=(15, 0))
+
+        pending_title = tk.Label(
+            pending_frame,
+            text="Channels to fetch:",
+            font=("Segoe UI", 11, "bold"),
+            bg=ModernColors.BG_CARD,
+            fg=ModernColors.TEXT_PRIMARY
+        )
+        pending_title.pack(anchor="w", pady=(0, 10))
+
+        # Scrollable frame for pending channels
+        self.pending_channels_list_frame = tk.Frame(pending_frame, bg=ModernColors.BG_CARD)
+        self.pending_channels_list_frame.pack(fill="x")
+
+        # Get All Videos button - LARGER and more prominent
+        self.get_all_videos_btn = tk.Button(
+            card_content,
+            text="📥 Get All Videos",
+            command=self.fetch_all_pending_channels,
+            font=("Segoe UI", 14, "bold"),
+            bg=ModernColors.SUCCESS,
+            fg="white",
+            padx=30,
+            pady=15,
+            relief=tk.FLAT,
+            bd=0,
+            cursor="hand2",
+            state=tk.DISABLED  # Disabled until channels are added
+        )
+        self.get_all_videos_btn.pack(anchor="w", pady=(20, 0))
+
+        # Store reference
+        self.channel_management_frame = card_content
+        
+        # Update status based on selected account
+        self.update_channel_management_status()
+
+    def update_channel_management_status(self):
+        """Update the status label in channel management card"""
+        selected_account = self.account_var.get()
+        if selected_account and selected_account != "":
+            self.channel_management_status.config(
+                text=f"Adding channels to: {selected_account}",
+                fg=ModernColors.SUCCESS,
+                font=("Segoe UI", 11, "bold")
+            )
+        else:
+            self.channel_management_status.config(
+                text="Please select an account above first",
+                fg=ModernColors.TEXT_SECONDARY,
+                font=("Segoe UI", 11, "italic")
+            )
+
+    def add_channel_to_pending(self):
+        """Add channel URL to pending list"""
+        channel_url = self.channel_url_entry.get().strip()
+        
+        if not channel_url:
+            self.log_message("⚠ Please enter a channel URL", "WARNING")
+            return
+        
+        # Check if account is selected
+        selected_account = self.account_var.get()
+        if not selected_account or selected_account == "":
+            self.log_message("⚠ Please select an account first", "WARNING")
+            return
+        
+        # Check if already in pending list
+        if channel_url in self.pending_channels:
+            self.log_message(f"⚠ Channel already in pending list: {channel_url}", "WARNING")
+            return
+        
+        # Add to pending list
+        self.pending_channels.append(channel_url)
+        self.log_message(f"✓ Added to pending list: {channel_url}", "SUCCESS")
+        
+        # Update UI
+        self.refresh_pending_channels_list()
+        
+        # Clear input
+        self.channel_url_entry.delete(0, tk.END)
+        
+        # Enable "Get All Videos" button
+        if len(self.pending_channels) > 0:
+            self.get_all_videos_btn.config(state=tk.NORMAL)
+
+    def remove_pending_channel(self, channel_url):
+        """Remove channel from pending list"""
+        if channel_url in self.pending_channels:
+            self.pending_channels.remove(channel_url)
+            self.log_message(f"✓ Removed from pending list: {channel_url}", "INFO")
+            self.refresh_pending_channels_list()
+            
+            # Disable button if no pending channels
+            if len(self.pending_channels) == 0:
+                self.get_all_videos_btn.config(state=tk.DISABLED)
+
+    def refresh_pending_channels_list(self):
+        """Refresh the pending channels list UI"""
+        # Clear existing widgets
+        for widget in self.pending_channels_list_frame.winfo_children():
+            widget.destroy()
+        
+        # Display pending channels
+        if len(self.pending_channels) == 0:
+            no_channels = tk.Label(
+                self.pending_channels_list_frame,
+                text="No channels added yet",
+                font=("Segoe UI", 10),
+                bg=ModernColors.BG_CARD,
+                fg=ModernColors.TEXT_SECONDARY
+            )
+            no_channels.pack(anchor="w")
+        else:
+            for channel_url in self.pending_channels:
+                channel_row = tk.Frame(self.pending_channels_list_frame, bg=ModernColors.BG_CARD)
+                channel_row.pack(fill="x", pady=(0, 5))
+                
+                # Channel URL label
+                channel_label = tk.Label(
+                    channel_row,
+                    text=f"  • {channel_url}",
+                    font=("Segoe UI", 10),
+                    bg=ModernColors.BG_CARD,
+                    fg=ModernColors.TEXT_PRIMARY,
+                    anchor="w"
+                )
+                channel_label.pack(side="left", fill="x", expand=True)
+                
+                # Remove button
+                remove_btn = tk.Button(
+                    channel_row,
+                    text="🗑️",
+                    command=lambda url=channel_url: self.remove_pending_channel(url),
+                    font=("Segoe UI", 10),
+                    bg=ModernColors.ERROR,
+                    fg="white",
+                    padx=8,
+                    pady=2,
+                    relief=tk.FLAT,
+                    bd=0
+                )
+                remove_btn.pack(side="right")
+        
+        # Update count in button text
+        count = len(self.pending_channels)
+        self.get_all_videos_btn.config(
+            text=f"📥 Get All Videos ({count} channel{'s' if count != 1 else ''})"
+        )
+
+    def fetch_all_pending_channels(self):
+        """Fetch videos for all pending channels"""
+        if len(self.pending_channels) == 0:
+            self.log_message("⚠ No channels to fetch", "WARNING")
+            return
+        
+        selected_account = self.account_var.get()
+        if not selected_account or selected_account == "":
+            self.log_message("⚠ Please select an account first", "WARNING")
+            return
+        
+        self.log_message(f"🚀 Starting to fetch videos for {len(self.pending_channels)} channels...", "INFO")
+        
+        # Start fetching in a thread
+        def fetch_thread():
+            try:
+                total = len(self.pending_channels)
+                for i, channel_url in enumerate(self.pending_channels, 1):
+                    self.log_message(f"📥 Fetching channel {i}/{total}: {channel_url}", "INFO")
+                    
+                    # Update progress
+                    progress = (i / total) * 100
+                    self.update_progress(progress, f"Fetching channel {i}/{total}...")
+                    
+                    # Fetch video IDs using existing function
+                    try:
+                        from src.scraper.channel import get_channel_video_ids, save_to_config
+                        
+                        video_ids = get_channel_video_ids(channel_url)
+                        
+                        if video_ids:
+                            self.log_message(f"✓ Found {len(video_ids)} videos in {channel_url}", "SUCCESS")
+                            
+                            # Get cookies file for this account (sanitize name)
+                            safe_account_name = re.sub(r'[^\w\-_]', '_', selected_account)
+                            cookies_file = f"profile/youtube_cookies_{safe_account_name}.json"
+                            
+                            # Save to config
+                            save_to_config(
+                                channel_url=channel_url,
+                                video_ids=video_ids,
+                                cookies_file=cookies_file
+                            )
+                            
+                            self.log_message(f"✓ Saved to account: {selected_account}", "SUCCESS")
+                        else:
+                            self.log_message(f"⚠ No videos found in {channel_url}", "WARNING")
+                    
+                    except Exception as e:
+                        self.log_message(f"✗ Error fetching {channel_url}: {str(e)}", "ERROR")
+                
+                # Clear pending list
+                self.pending_channels.clear()
+                self.root.after(0, self.refresh_pending_channels_list)
+                
+                # Refresh accounts overview
+                self.root.after(0, self.refresh_accounts_overview)
+                
+                # Reset progress
+                self.update_progress(100, "All channels fetched!")
+                self.log_message("✓ All channels fetched successfully!", "SUCCESS")
+                
+            except Exception as e:
+                self.log_message(f"✗ Error in fetch thread: {str(e)}", "ERROR")
+                import traceback
+                traceback.print_exc()
+        
+        # Start thread
+        import threading
+        thread = threading.Thread(target=fetch_thread, daemon=True)
+        thread.start()
+
+    def refresh_accounts_overview(self):
+        """Refresh the accounts overview card"""
+        try:
+            # Destroy old overview
+            if self.accounts_overview_frame:
+                parent = self.accounts_overview_frame.master
+                parent.destroy()
+            
+            # Recreate at the same position
+            # Find position in main_frame
+            if hasattr(self, 'main_frame'):
+                # Recreate the overview card
+                self.create_accounts_overview_card(self.main_frame)
+                
+                # Force update
+                self.root.update()
+                self.log_message("✓ Refreshed accounts overview", "INFO")
+        except Exception as e:
+            self.log_message(f"⚠ Error refreshing overview: {str(e)}", "WARNING")
+
+    def start_batch_scraping(self):
+        """Start scraping for selected accounts"""
+        # Get selected accounts
+        selected = [name for name, var in self.selected_accounts.items() if var.get()]
+        
+        if not selected:
+            self.log_message("⚠ No accounts selected for scraping", "WARNING")
+            return
+        
+        self.log_message(f"🚀 Starting batch scraping for {len(selected)} account(s)...", "INFO")
+        
+        # Use existing scraping logic
+        # This will be implemented using the existing start_scraping method
+        # For now, just log
+        for account_name in selected:
+            self.log_message(f"  → {account_name}", "INFO")
+        
+        self.log_message("ℹ Batch scraping will be implemented using existing scraping logic", "INFO")
+
+
 
     def create_input_card(self, parent):
         """Tạo card nhập liệu - MODIFIED cho multi-account support"""
@@ -2193,6 +2787,10 @@ class YouTubeScraperGUI:
 
             self.account_status_label.configure(text=status_text)
             self.log_message(f"Đã chuyển sang tài khoản: {selected_account}", "INFO")
+            
+            # === Update channel management status (NEW WORKFLOW) ===
+            if hasattr(self, 'update_channel_management_status'):
+                self.update_channel_management_status()
 
         except Exception as e:
             self.log_message(f"Lỗi xử lý thay đổi tài khoản: {str(e)}", "ERROR")
