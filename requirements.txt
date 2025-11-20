@@ -1,0 +1,6 @@
+selenium==4.15.2
+webdriver-manager==4.0.1
+yt-dlp==2024.8.6
+customtkinter==5.2.0
+Pillow==10.4.0
+darkdetect==0.8.0

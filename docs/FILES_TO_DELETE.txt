@@ -1,0 +1,42 @@
+# Old files to delete after refactoring verification
+
+## Documentation files (consolidated to docs/)
+- CHANGES.txt
+- DELIVERABLES_SUMMARY.txt
+- FIX_AUTO_SCRAPING.md
+- FIX_SUMMARY.md
+- IMPLEMENTATION_LOG.md
+- MULTI_ACCOUNT_SOLUTION_DESIGN.md
+- MULTI_ACCOUNT_SUMMARY.md
+- MULTI_ACCOUNT_VISUAL_GUIDE.md
+- MULTI_ACCOUNT_WORKFLOW_ISSUE.md
+- OPTIMIZATION_PROGRESS.md
+- PHASE1_COMPLETION_REPORT.md
+- PHASE1_INDEX.md
+- QUICK_REFERENCE.md
+- README_WORKFLOW_ANALYSIS.md
+- review.md
+- STOP_BUTTON_FIX.md
+- TESTING_INSTRUCTIONS.md
+- UI_UX_IMPROVEMENTS.md
+- WORKFLOW_REVIEW.md
+
+## Old code files (moved to src/)
+- craw.py (moved to src/scraper/youtube.py)
+- gui.py (moved to src/gui/app.py)
+- get_channel_videos.py (moved to src/scraper/channel.py)
+
+## Old utils (moved to src/utils/)
+- utils/  (entire directory)
+
+KEEP:
+- README.md (main documentation, reference)
+- requirements.txt (dependencies)
+- config.json (user configuration)
+- profile/  (user data)
+- chrome_profile/  (browser profile)
+- .claude/  (Claude Code settings)
+
+NEW:
+- src/  (new source code structure)
+- docs/  (new consolidated documentation)
