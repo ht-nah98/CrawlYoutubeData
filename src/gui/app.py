@@ -25,7 +25,7 @@ except ImportError:
     print("CustomTkinter không có sẵn. Sử dụng tkinter thông thường với styling tùy chỉnh.")
 
 # Import logic từ các file khác
-from get_channel_videos import (
+from src.scraper.channel import (
     get_channel_video_ids,
     login_and_save_cookies,
     load_cookies,
@@ -34,8 +34,8 @@ from get_channel_videos import (
     select_account_interactive,
     save_to_config
 )
-from craw import YouTubeAnalyticsScraper, process_channel
-from utils import ScrapingTracker
+from src.scraper.youtube import YouTubeAnalyticsScraper, process_channel
+from src.utils.scraping_tracker import ScrapingTracker
 
 
 class ModernColors:
@@ -751,6 +751,34 @@ class YouTubeScraperGUI:
             print(f"Error creating batch account selector card: {str(e)}")
             import traceback
             traceback.print_exc()
+
+    def refresh_batch_account_selector(self):
+        """
+        Refresh the batch account selector card to show updated accounts
+        Called after adding new account to show it in the selector
+        """
+        try:
+            # Remove old card if it exists
+            if hasattr(self, 'batch_selector_card') and self.batch_selector_card:
+                self.batch_selector_card.destroy()
+
+            # Clear account widgets and variables
+            self.batch_scraping_widgets.clear()
+            self.selected_accounts.clear()
+
+            # Find the parent frame where batch selector was
+            # Need to recreate in the right position
+            if hasattr(self, 'main_frame'):
+                # Recreate the batch selector with updated accounts from config
+                self.create_batch_account_selector_card(self.main_frame)
+
+                # Update the view
+                self.root.update()
+                self.log_message("✓ Đã làm mới danh sách tài khoản", "INFO")
+            else:
+                self.log_message("⚠ Không tìm thấy main_frame để làm mới selector", "WARNING")
+        except Exception as e:
+            self.log_message(f"Lỗi làm mới danh sách tài khoản: {str(e)}", "ERROR")
 
     def update_text_widget(self, text_widget, content):
         """Helper function to update disabled text widget"""
@@ -1646,6 +1674,12 @@ class YouTubeScraperGUI:
                 json.dump(cookies, f, ensure_ascii=False, indent=2)
 
             self.log_message(f"✓ Đã lưu cookies vào: {cookies_file}", "SUCCESS")
+
+            # FIX: Update config.json with new account to ensure persistence
+            if account_name:
+                update_accounts_list(account_name, cookies_file)
+                self.log_message(f"✓ Tài khoản '{account_name}' đã được lưu vào config.json", "SUCCESS")
+
             return cookies_file
 
         except Exception as e:
@@ -2135,7 +2169,16 @@ class YouTubeScraperGUI:
                 self.channel_dropdown.configure(values=channel_display_list)
 
                 if channel_display_list:
-                    self.channel_dropdown.current(0)  # Select first channel
+                    # Handle both CTkComboBox (set) and ttk.Combobox (current)
+                    try:
+                        # Try CTkComboBox method first
+                        if hasattr(self.channel_dropdown, 'set'):
+                            self.channel_dropdown.set(channel_display_list[0])
+                        else:
+                            # Fallback to ttk.Combobox method
+                            self.channel_dropdown.current(0)
+                    except Exception as e:
+                        self.log_message(f"⚠ Lỗi cập nhật dropdown: {str(e)}", "WARNING")
                     self.on_channel_changed()
 
             # === Update status label ===
@@ -2233,9 +2276,9 @@ class YouTubeScraperGUI:
 
             self.log_message(f"Đang thiết lập tài khoản mới: {account_name}...", "INFO")
 
-            # Mở Chrome để đăng nhập
+            # Mở Chrome để đăng nhập (dùng phiên bản GUI không yêu cầu terminal)
             try:
-                cookies_file = login_and_save_cookies(account_name)
+                cookies_file = self.gui_login_and_save_cookies(account_name)
 
                 if cookies_file:
                     self.log_message(f"✓ Tài khoản mới đã được tạo: {account_name}", "SUCCESS")
@@ -2249,6 +2292,9 @@ class YouTubeScraperGUI:
 
                     self.account_var.set(account_name)
                     self.on_account_changed()
+
+                    # Refresh batch account selector to show new account
+                    self.refresh_batch_account_selector()
                 else:
                     self.log_message(f"✗ Lỗi tạo tài khoản: {account_name}", "ERROR")
             except Exception as e:
@@ -2343,9 +2389,13 @@ class YouTubeScraperGUI:
 
                     # Load các settings khác từ config
                     self.auto_scraping_interval = config.get('auto_scraping_interval', 30)
-                    if self.auto_interval_entry:
-                        self.auto_interval_entry.delete(0, tk.END)
-                        self.auto_interval_entry.insert(0, str(self.auto_scraping_interval))
+                    # Only update auto_interval_entry if it exists and is created
+                    if hasattr(self, 'auto_interval_entry') and self.auto_interval_entry:
+                        try:
+                            self.auto_interval_entry.delete(0, tk.END)
+                            self.auto_interval_entry.insert(0, str(self.auto_scraping_interval))
+                        except Exception as e:
+                            self.log_message(f"⚠ Không thể cập nhật interval entry: {str(e)}", "WARNING")
 
                 else:
                     self.log_message("Chưa có tài khoản nào được cấu hình trong config.json", "WARNING")
@@ -2601,14 +2651,19 @@ class YouTubeScraperGUI:
                     # Lưu vào config nếu có account
                     if has_account and (self.current_account_name or self.current_cookies_file):
                         self.update_progress(90, "Đang lưu vào config.json...")
-                        self.log_message("Đang lưu vào config.json...", "INFO")
+                        self.log_message(f"Đang lưu kênh vào tài khoản: {self.current_account_name}...", "INFO")
+
+                        # CRITICAL FIX: Pass cookies_file to ensure proper account-channel linking
                         success = save_to_config(
                             channel_url=channel_url,
                             video_ids=video_ids,
-                            cookies_file=self.current_cookies_file
+                            cookies_file=self.current_cookies_file  # ✓ This links channel to correct account
                         )
                         if success:
                             self.log_message("✓ Đã lưu vào config.json", "SUCCESS")
+                            # CRITICAL FIX: Refresh account selector to show newly saved account
+                            self.log_message("Đang làm mới danh sách tài khoản...", "INFO")
+                            self.refresh_batch_account_selector()
                         else:
                             self.log_message("⚠ Không thể lưu vào config.json", "WARNING")
                     elif not has_account:
@@ -2725,13 +2780,17 @@ class YouTubeScraperGUI:
                 channels = account.get('channels', [])
 
                 self.log_message(f"\n[{account_idx}/{total_accounts}] 🔄 Cào tài khoản: {account_name}", "INFO")
-                self.log_message(f"Số kênh: {len(channels)}", "INFO")
+                self.log_message(f"👤 Cookies: {cookies_file if cookies_file else 'N/A'}", "INFO")
+                self.log_message(f"📹 Số kênh: {len(channels)}", "INFO")
 
                 # Collect all video IDs from all channels for this account
+                # CRITICAL: Each channel is explicitly linked to this account
                 all_video_ids = []
-                for channel in channels:
+                for channel_idx, channel in enumerate(channels, 1):
+                    channel_url = channel.get('url', 'Unknown')
                     video_ids = channel.get('video_ids', [])
                     all_video_ids.extend(video_ids)
+                    self.log_message(f"   ├─ Kênh {channel_idx}: {channel_url} ({len(video_ids)} videos)", "INFO")
 
                 total_videos = len(all_video_ids)
                 if total_videos == 0:
@@ -2741,8 +2800,11 @@ class YouTubeScraperGUI:
                 self.log_message(f"Số video cần cào: {total_videos}", "INFO")
 
                 # Initialize scraper for this account
+                # CRITICAL FIX: Use this account's cookies for this account's channels
                 scraper_instance = None
                 try:
+                    self.log_message(f"✓ Sử dụng cookies của {account_name}: {cookies_file}", "SUCCESS")
+
                     scraper_instance = YouTubeAnalyticsScraper(
                         cookies_file=cookies_file,
                         account_name=account_name,

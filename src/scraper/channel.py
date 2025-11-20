@@ -369,15 +369,36 @@ def login_and_save_cookies(account_name=None, cookies_file=None):
         # Khởi tạo driver
         print("Đang khởi tạo Chrome driver...")
         driver = init_chrome_driver(headless=False)
-        
+
         # Đăng nhập Google
         print("Đang mở trang đăng nhập Google...")
         driver.get('https://accounts.google.com')
-        
+
         print("\nVui lòng đăng nhập thủ công trong trình duyệt...")
-        print("Sau khi đăng nhập xong, nhấn Enter ở đây để tiếp tục...")
-        input()
-        
+        print("Đang chờ đăng nhập thành công (tối đa 120 giây)...")
+
+        # Chờ tự động cho đến khi user đăng nhập thành công
+        # Kiểm tra xem user đã được chuyển hướng đến trang sau đăng nhập không
+        max_wait = 120  # Chờ tối đa 120 giây
+        wait_interval = 2  # Kiểm tra mỗi 2 giây
+        elapsed = 0
+
+        while elapsed < max_wait:
+            try:
+                # Kiểm tra xem user đã đăng nhập bằng cách kiểm tra URL
+                current_url = driver.current_url
+                # Nếu đã rời khỏi trang đăng nhập, có thể đã đăng nhập
+                if 'accounts.google.com' not in current_url or elapsed > 10:
+                    break
+                time.sleep(wait_interval)
+                elapsed += wait_interval
+                print(f"  Chờ đăng nhập ({elapsed}s)...")
+            except Exception as e:
+                print(f"  Kiểm tra đăng nhập: {str(e)}")
+                break
+
+        print("✓ Đã phát hiện đăng nhập thành công")
+
         # Điều hướng đến YouTube để lấy cookies của YouTube
         print("\nĐang điều hướng đến YouTube để lấy cookies...")
         driver.get('https://www.youtube.com')
@@ -407,8 +428,13 @@ def login_and_save_cookies(account_name=None, cookies_file=None):
         raise
     finally:
         if driver:
-            input("\nNhấn Enter để đóng trình duyệt...")
-            driver.quit()
+            try:
+                print("\nTự động đóng trình duyệt...")
+                time.sleep(2)  # Give user time to see the message
+                driver.quit()
+                print("✓ Trình duyệt đã đóng")
+            except:
+                pass
 
 
 def update_accounts_list(account_name, cookies_file):

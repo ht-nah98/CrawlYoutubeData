@@ -23,9 +23,8 @@ from src.gui.app import YouTubeScraperGUI
 def main():
     """Main entry point for GUI application"""
     try:
-        root = tk.Tk()
-        app = YouTubeScraperGUI(root)
-        root.mainloop()
+        app = YouTubeScraperGUI()
+        app.root.mainloop()
     except KeyboardInterrupt:
         print("\n✓ Application closed by user")
         sys.exit(0)
