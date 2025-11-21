@@ -4,3 +4,13 @@ yt-dlp==2024.8.6
 customtkinter==5.2.0
 Pillow==10.4.0
 darkdetect==0.8.0
+
+# Database & ORM
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# FastAPI & Web
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
