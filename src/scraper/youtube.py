@@ -100,9 +100,9 @@ def thread_safe_print(*args, **kwargs):
 
 
 class YouTubeAnalyticsScraper:
-    def __init__(self, cookies_file=None, account_name=None, auto_continue=False, wait_time=30):
+    def __init__(self, cookies_file=None, account_name=None, auto_continue=False, wait_time=30, channel_url=None):
         # Đảm bảo thư mục profile tồn tại
-        os.makedirs('profile', exist_ok=True)
+        os.makedirs('data/cookies/profile', exist_ok=True)
 
         # Lưu các settings cho login
         self.auto_continue = auto_continue
@@ -112,7 +112,7 @@ class YouTubeAnalyticsScraper:
         if cookies_file:
             # Nếu cookies_file không có đường dẫn đầy đủ, đặt vào thư mục profile
             if not os.path.dirname(cookies_file) and cookies_file == 'youtube_cookies.json':
-                self.cookies_file = os.path.join('profile', cookies_file)
+                self.cookies_file = os.path.join('data/cookies/profile', cookies_file)
             else:
                 self.cookies_file = cookies_file
             # Thử extract account_name từ cookies_file nếu có pattern
@@ -125,12 +125,15 @@ class YouTubeAnalyticsScraper:
             # Tạo tên file cookies dựa trên account_name
             # Loại bỏ ký tự đặc biệt để tránh lỗi tên file
             safe_account_name = re.sub(r'[^\w\-_]', '_', account_name)
-            self.cookies_file = os.path.join('profile', f'youtube_cookies_{safe_account_name}.json')
+            self.cookies_file = os.path.join('data/cookies/profile', f'youtube_cookies_{safe_account_name}.json')
             self.account_name = account_name
         else:
             # Mặc định: dùng cookies file mặc định
-            self.cookies_file = os.path.join('profile', 'youtube_cookies.json')
+            self.cookies_file = os.path.join('data/cookies/profile', 'youtube_cookies.json')
             self.account_name = None
+        
+        # Track current channel URL for database linking
+        self.channel_url = channel_url
         
         self.driver = None
         
@@ -2027,8 +2030,14 @@ class YouTubeAnalyticsScraper:
         
         return results
         
-    def save_results(self, results, output_file='analytics_results.json'):
-        """Lưu kết quả ra file JSON (merge với dữ liệu cũ, tránh trùng lặp video_id)"""
+    def save_results(self, results, output_file='analytics_results.json', save_to_db=True):
+        """Lưu kết quả ra file JSON và database (merge với dữ liệu cũ, tránh trùng lặp video_id)
+        
+        Args:
+            results: List of analytics results
+            output_file: JSON output file path
+            save_to_db: Whether to save to database (default: True)
+        """
         # Đọc dữ liệu cũ nếu có
         existing_results = []
         if os.path.exists(output_file):
@@ -2067,14 +2076,68 @@ class YouTubeAnalyticsScraper:
         final_results = list(results_dict.values())
         final_results.sort(key=lambda x: x.get('video_id', ''))
         
-        # Lưu lại
+        # Lưu vào JSON file
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(final_results, f, ensure_ascii=False, indent=2)
         
-        print(f"\nĐã lưu kết quả vào {output_file}")
+        print(f"\n✓ Đã lưu kết quả vào JSON: {output_file}")
         print(f"  - Video IDs mới: {new_count}")
         print(f"  - Video IDs cập nhật: {updated_count}")
         print(f"  - Tổng số video IDs trong file: {len(final_results)}")
+        
+        # Save to database if enabled
+        if save_to_db:
+            try:
+                from src.database.writers import db_writer
+                from src.database.models import Account
+                from src.database.connection import db
+                
+                print(f"\n📊 Đang lưu vào database...")
+                
+                # Ensure account exists in database
+                with db.session_scope() as session:
+                    account = session.query(Account).filter(Account.name == self.account_name).first()
+                    if not account:
+                        # Create account if it doesn't exist
+                        account = Account(
+                            name=self.account_name,
+                            cookies_file=self.cookies_file
+                        )
+                        session.add(account)
+                        session.commit()
+                        print(f"  ✓ Created account in database: {self.account_name}")
+                
+                # Save each result to database
+                db_saved_count = 0
+                db_error_count = 0
+                for result in results:
+                    video_id = result.get('video_id')
+                    if not video_id or 'error' in result:
+                        continue
+                    
+                    try:
+                        db_writer.save_analytics(
+                            video_id=video_id,
+                            account_name=self.account_name,
+                            analytics_data=result,
+                            channel_url=self.channel_url  # Pass channel URL for linking
+                        )
+                        db_saved_count += 1
+                    except Exception as e:
+                        print(f"  ⚠ Lỗi khi lưu video {video_id} vào database: {str(e)}")
+                        db_error_count += 1
+                
+                print(f"✓ Đã lưu vào database:")
+                print(f"  - Thành công: {db_saved_count} video(s)")
+                if db_error_count > 0:
+                    print(f"  - Lỗi: {db_error_count} video(s)")
+                    
+            except ImportError as e:
+                print(f"⚠ Không thể import database modules: {str(e)}")
+                print("  → Chỉ lưu vào JSON file")
+            except Exception as e:
+                print(f"⚠ Lỗi khi lưu vào database: {str(e)}")
+                print("  → Dữ liệu đã được lưu vào JSON file")
         
     def close(self):
         """Đóng browser"""

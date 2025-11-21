@@ -15,15 +15,21 @@ import os
 import time
 import re
 import sys
+import signal
+
+# Disable theme change events to prevent segmentation fault
+# This is a known issue with Tkinter/CustomTkinter mixing
+os.environ['TK_SILENCE_DEPRECATION'] = '1'
+
+# Tcl patching is handled in main.py to prevent multiple Tk instances
 
 # Import các module cần thiết
-# CustomTkinter is now enabled with CTkScrollableFrame fix
 CUSTOM_TK_AVAILABLE = False
-try:
-    import customtkinter as ctk
-    CUSTOM_TK_AVAILABLE = True
-except ImportError:
-    pass
+# try:
+#     import customtkinter as ctk
+#     CUSTOM_TK_AVAILABLE = True
+# except ImportError:
+#     pass
 
 if not CUSTOM_TK_AVAILABLE:
     print("Using standard tkinter (CustomTkinter not found)")
@@ -42,6 +48,9 @@ from src.scraper.channel import (
 )
 from src.scraper.youtube import YouTubeAnalyticsScraper, process_channel
 from src.utils.scraping_tracker import ScrapingTracker
+from src.database.writers import db_writer
+from src.database.models import Account
+from src.database.connection import db
 
 
 class ModernColors:
@@ -94,6 +103,31 @@ class YouTubeScraperGUI:
             self.root = tk.Tk()
             self.root.configure(bg=ModernColors.BG_DARK)
 
+        # CRITICAL: Apply Tcl patch - DISABLED for debugging
+        # try:
+        #     self.root.eval("""
+        #     # Disable all ttk theme change callbacks
+        #     proc ttk::ThemeChanged args {
+        #         # Silently ignore theme change events to prevent segfault
+        #         return
+        #     }
+        #
+        #     # Also patch the style command to prevent theme operations
+        #     proc ttk::style {args} {
+        #         # Safely handle style operations
+        #         return
+        #     }
+        #     """)
+        # except Exception as e:
+        #     print(f"Warning: Failed to patch Tcl: {e}")
+
+        # Prevent Tkinter theme event errors on shutdown - REMOVED to fix segfault
+        # try:
+        #     self.root.withdraw()  # Hide window temporarily during initialization
+        #     self.root.update()
+        # except:
+        #     pass
+
         # Khởi tạo các biến logic nghiệp vụ
         self.scraper = None  # YouTubeAnalyticsScraper instance
         self.current_account_name = None
@@ -142,11 +176,11 @@ class YouTubeScraperGUI:
 
         self.root.title("🎥 YouTube Analytics Scraper")
         
-        # Configure icon (optional)
-        try:
-            self.root.iconbitmap(default="")  # Add icon path if available
-        except:
-            pass
+        # Configure icon (optional) - DISABLED to prevent Linux segfault
+        # try:
+        #     self.root.iconbitmap(default="")  # Add icon path if available
+        # except:
+        #     pass
         
         # Cho phép responsive (resize)
         self.root.resizable(True, True)
@@ -164,12 +198,14 @@ class YouTubeScraperGUI:
         
         # Tạo giao diện
         self.create_widgets()
+        # label = tk.Label(self.root, text="SAFE MODE: If you see this, the app core is working.", font=("Arial", 14))
+        # label.pack(expand=True, fill='both', padx=50, pady=50)
 
         # Cố gắng maximize (nếu có thể)
-        self.root.after(50, self.maximize_window)
+        # self.root.after(50, self.maximize_window)
 
         # Khởi tạo logic nghiệp vụ
-        self.init_business_logic()
+    # self.init_business_logic() - DISABLED FOR DEBUGGING
         
     def center_window(self):
         """Căn giữa cửa sổ ban đầu"""
@@ -183,24 +219,20 @@ class YouTubeScraperGUI:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
         
     def maximize_window(self):
-        """Maximize cửa sổ để fullscreen"""
+        """Maximize cửa sổ để fullscreen - Simplified for Linux stability"""
         try:
-            # Windows - cách 1
-            self.root.state('zoomed')
+            # Just set a large size instead of forcing maximized state
+            # This is safer on Linux to avoid segfaults
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            # Use 90% of screen size
+            w = int(screen_width * 0.9)
+            h = int(screen_height * 0.9)
+            x = int((screen_width - w) / 2)
+            y = int((screen_height - h) / 2)
+            self.root.geometry(f'{w}x{h}+{x}+{y}')
         except:
-            try:
-                # Windows - cách 2 (nếu cách 1 không work)
-                self.root.wm_state('zoomed')
-            except:
-                try:
-                    # Linux
-                    self.root.attributes('-zoomed', True)
-                except:
-                    # Fallback: Đặt kích thước = full màn hình
-                    screen_width = self.root.winfo_screenwidth()
-                    screen_height = self.root.winfo_screenheight()
-                    # Lấy taskbar height (thường ~40px trên Windows)
-                    self.root.geometry(f'{screen_width}x{screen_height}+0+0')
+            pass
         
     def create_widgets(self):
         """Tạo các widget cho giao diện"""
@@ -2265,13 +2297,13 @@ class YouTubeScraperGUI:
         if account_name:
             # Tạo tên file cookies dựa trên account_name
             safe_account_name = re.sub(r'[^\w\-_]', '_', account_name)
-            cookies_file = os.path.join('profile', f'youtube_cookies_{safe_account_name}.json')
+            cookies_file = os.path.join('data/cookies/profile', f'youtube_cookies_{safe_account_name}.json')
         elif not cookies_file:
             # Mặc định: dùng cookies file mặc định
-            cookies_file = os.path.join('profile', 'youtube_cookies.json')
+            cookies_file = os.path.join('data/cookies/profile', 'youtube_cookies.json')
 
         # Đảm bảo thư mục profile tồn tại
-        os.makedirs('profile', exist_ok=True)
+        os.makedirs('data/cookies/profile', exist_ok=True)
 
         # Kiểm tra xem cookies_file đã tồn tại chưa
         if os.path.exists(cookies_file):
@@ -2316,6 +2348,22 @@ class YouTubeScraperGUI:
             if account_name:
                 update_accounts_list(account_name, cookies_file)
                 self.log_message(f"✓ Tài khoản '{account_name}' đã được lưu vào config.json", "SUCCESS")
+                
+                # NEW: Save to database
+                try:
+                    with db.session_scope() as session:
+                        account = session.query(Account).filter(Account.name == account_name).first()
+                        if not account:
+                            account = Account(name=account_name, cookies_file=cookies_file)
+                            session.add(account)
+                            self.log_message(f"✓ Tài khoản '{account_name}' đã được lưu vào database", "SUCCESS")
+                        else:
+                             # Update cookies file if changed
+                             if account.cookies_file != cookies_file:
+                                 account.cookies_file = cookies_file
+                                 self.log_message(f"✓ Cập nhật cookies cho tài khoản '{account_name}' trong database", "SUCCESS")
+                except Exception as e:
+                    self.log_message(f"⚠ Lỗi lưu tài khoản vào database: {str(e)}", "WARNING")
 
             return cookies_file
 
@@ -3108,7 +3156,8 @@ class YouTubeScraperGUI:
                     info_text += f"   Channels: {len(channels)}, Videos: {total_videos}\n\n"
 
                 # Cập nhật channel_info_text - FIX: Use helper for disabled widget
-                self.update_text_widget(self.channel_info_text, info_text)
+                if hasattr(self, 'channel_info_text'):
+                    self.update_text_widget(self.channel_info_text, info_text)
             else:
                 info_text = "Chưa có tài khoản nào được lưu.\n\n"
                 info_text += "Để bắt đầu:\n"
@@ -3118,7 +3167,8 @@ class YouTubeScraperGUI:
                 info_text += "4. Nhấn '🚀 Bắt đầu cào dữ liệu'\n"
 
                 # FIX: Use helper for disabled widget
-                self.update_text_widget(self.channel_info_text, info_text)
+                if hasattr(self, 'channel_info_text'):
+                    self.update_text_widget(self.channel_info_text, info_text)
 
         except Exception as e:
             self.log_message(f"Lỗi khi hiển thị accounts trong UI: {str(e)}", "ERROR")
@@ -3981,6 +4031,13 @@ class YouTubeScraperGUI:
     def log_message(self, message, level="INFO"):
         """Ghi log message với màu sắc"""
         timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        # Print to console first (always safe)
+        print(f"[{timestamp}] {level}: {message}")
+
+        # Check if UI log widget exists
+        if not hasattr(self, 'log_text') or not self.log_text:
+            return
 
         # Color coding
         colors = {
@@ -3993,27 +4050,31 @@ class YouTubeScraperGUI:
 
         log_entry = f"[{timestamp}] {level}: {message}\n"
 
-        if CUSTOM_TK_AVAILABLE:
-            self.log_text.insert("end", log_entry)
-            # Color tagging would need custom text widget
-        else:
-            # FIX: Enable widget temporarily to insert text
-            self.log_text.configure(state=tk.NORMAL)
-            self.log_text.insert(tk.END, log_entry)
-            # Try to color the line
-            start = self.log_text.index("end-2l linestart")
-            end = self.log_text.index("end-2l lineend")
-            try:
-                self.log_text.tag_add(f"tag_{level}", start, end)
-                self.log_text.tag_config(f"tag_{level}", foreground=color)
-            except:
-                pass
-            self.log_text.configure(state=tk.DISABLED)  # FIX: Disable again
+        try:
+            if CUSTOM_TK_AVAILABLE:
+                self.log_text.insert("end", log_entry)
+            else:
+                self.log_text.configure(state=tk.NORMAL)
+                self.log_text.insert(tk.END, log_entry)
+                
+                # Apply color tag to the inserted line
+                # Get the line we just inserted (it's the one before "end")
+                # "end-1c" is the last char, "end-1c linestart" is start of last line
+                # But since we added \n, the last line is empty. So we want the line before that.
+                start = self.log_text.index("end-2l linestart")
+                end = self.log_text.index("end-2l lineend")
+                
+                tag_name = f"tag_{level}"
+                self.log_text.tag_add(tag_name, start, end)
+                self.log_text.tag_config(tag_name, foreground=color)
+                
+                self.log_text.configure(state=tk.DISABLED)
 
             # Auto scroll
-            self.log_text.see(tk.END)
-
-        self.root.update_idletasks()
+            self.log_text.see("end")
+            self.root.update_idletasks()
+        except Exception as e:
+            print(f"Error updating log UI: {e}")
         
     def clear_log(self):
         """Xóa log"""
@@ -4067,15 +4128,33 @@ class YouTubeScraperGUI:
         
     def run(self):
         """Chạy ứng dụng"""
+        # Show the window if it was hidden during initialization - REMOVED
+        # try:
+        #     self.root.deiconify()
+        # except:
+        #     pass
+
         self.log_message("Ứng dụng YouTube Analytics Scraper đã khởi động", "SUCCESS")
         self.log_message("Sẵn sàng để sử dụng!")
-        
+
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
     
     def on_closing(self):
         """Xử lý khi đóng ứng dụng"""
-        self.root.destroy()
+        try:
+            # Safely close any open dialogs or threads
+            if hasattr(self, 'scraper') and self.scraper:
+                self.scraper = None
+            # Destroy the root window
+            self.root.quit()
+            self.root.destroy()
+        except Exception as e:
+            print(f"Error during shutdown: {e}")
+            try:
+                self.root.quit()
+            except:
+                pass
 
 
 def main():

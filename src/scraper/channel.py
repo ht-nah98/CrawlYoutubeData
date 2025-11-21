@@ -347,7 +347,7 @@ def login_and_save_cookies(account_name=None, cookies_file=None):
         cookies_file = os.path.join('profile', 'youtube_cookies.json')
     
     # Đảm bảo thư mục profile tồn tại
-    os.makedirs('profile', exist_ok=True)
+    os.makedirs('data/cookies/profile', exist_ok=True)
     
     # Kiểm tra xem cookies_file đã tồn tại chưa
     if os.path.exists(cookies_file):
