@@ -17,18 +17,18 @@ import re
 import sys
 
 # Import các module cần thiết
-# DISABLED CustomTkinter due to segmentation fault issues with Canvas
-# Using standard tkinter instead for stability
+# CustomTkinter is now enabled with CTkScrollableFrame fix
 CUSTOM_TK_AVAILABLE = False
 try:
     import customtkinter as ctk
-    # Force disable even if available
-    # CUSTOM_TK_AVAILABLE = True
+    CUSTOM_TK_AVAILABLE = True
 except ImportError:
     pass
 
 if not CUSTOM_TK_AVAILABLE:
-    print("Using standard tkinter for stability (CustomTkinter disabled)")
+    print("Using standard tkinter (CustomTkinter not found)")
+else:
+    print("Using CustomTkinter for modern UI")
 
 # Import logic từ các file khác
 from src.scraper.channel import (
@@ -45,48 +45,48 @@ from src.utils.scraping_tracker import ScrapingTracker
 
 
 class ModernColors:
-    """Modern color palette - Professional & Clean"""
+    """Modern color palette - Professional & Clean (Dark Mode)"""
     # Primary colors
-    PRIMARY = "#2563EB"  # Modern Blue
-    PRIMARY_DARK = "#1E40AF"
+    PRIMARY = "#3B82F6"  # Bright Blue
+    PRIMARY_DARK = "#1D4ED8"
     PRIMARY_LIGHT = "#60A5FA"
     
     # Accent colors
-    ACCENT = "#3B82F6"  # Bright Blue
-    SUCCESS = "#10B981"  # Modern Green
-    WARNING = "#F59E0B"  # Orange
-    ERROR = "#EF4444"  # Modern Red
+    ACCENT = "#60A5FA"  # Lighter Blue
+    SUCCESS = "#10B981"  # Emerald
+    WARNING = "#F59E0B"  # Amber
+    ERROR = "#EF4444"  # Red
     INFO = "#06B6D4"  # Cyan
     
     # Background colors
-    BG_DARK = "#F9FAFB"  # Light Gray Background
-    BG_CARD = "#FFFFFF"  # White Cards
-    BG_HOVER = "#F3F4F6"  # Hover state
-    BG_SELECTED = "#EFF6FF"  # Selected state (light blue)
+    BG_DARK = "#0F172A"  # Slate 900 (Deep Blue/Black)
+    BG_CARD = "#1E293B"  # Slate 800 (Card Background)
+    BG_HOVER = "#334155"  # Slate 700
+    BG_SELECTED = "#1E40AF"  # Blue 800
     
     # Text colors
-    TEXT_PRIMARY = "#111827"  # Dark Gray
-    TEXT_SECONDARY = "#6B7280"  # Medium Gray
-    TEXT_MUTED = "#9CA3AF"  # Light Gray
-    TEXT_WHITE = "#FFFFFF"  # White
+    TEXT_PRIMARY = "#F8FAFC"  # Slate 50
+    TEXT_SECONDARY = "#94A3B8"  # Slate 400
+    TEXT_MUTED = "#64748B"  # Slate 500
+    TEXT_WHITE = "#FFFFFF"
     
     # Border colors
-    BORDER = "#E5E7EB"  # Light Border
-    BORDER_DARK = "#D1D5DB"  # Darker Border
+    BORDER = "#334155"  # Slate 700
+    BORDER_DARK = "#1E293B"  # Slate 800
     
     # Special
-    SHADOW = "#00000010"  # Subtle shadow
+    SHADOW = "#00000040"  # Stronger shadow for dark mode
     YOUTUBE_RED = "#FF0000"  # YouTube brand color
     
     # Backward compatibility
-    SECONDARY = "#F5F5F5"  # Light gray (for progress bars, etc.)
+    SECONDARY = "#334155"  # Slate 700
 
 
 class YouTubeScraperGUI:
     def __init__(self):
-        # Khởi tạo giao diện - Light theme
+        # Khởi tạo giao diện - Dark theme
         if CUSTOM_TK_AVAILABLE:
-            ctk.set_appearance_mode("light")
+            ctk.set_appearance_mode("dark")
             ctk.set_default_color_theme("blue")
             self.root = ctk.CTk()
             self.root.configure(fg_color=ModernColors.BG_DARK)
@@ -205,124 +205,149 @@ class YouTubeScraperGUI:
     def create_widgets(self):
         """Tạo các widget cho giao diện"""
         
-        # Tạo canvas với scrollbar để có thể cuộn
-        canvas_container = tk.Frame(self.root, bg=ModernColors.BG_DARK)
-        canvas_container.pack(fill="both", expand=True, side="top")
+        parent = None
         
-        # Canvas để chứa nội dung có thể cuộn
-        canvas = tk.Canvas(
-            canvas_container,
-            bg=ModernColors.BG_DARK,
-            highlightthickness=0
-        )
-        
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(
-            canvas_container,
-            orient="vertical",
-            command=canvas.yview
-        )
-        
-        # Cấu hình canvas và scrollbar
-        canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Pack scrollbar và canvas
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-        
-        # Tạo frame padding bên trong canvas (dùng để tạo padding)
-        padding_frame = tk.Frame(canvas, bg=ModernColors.BG_DARK)
-        
-        # Main container (bên trong padding_frame, có padding)
-        # Use regular tk.Frame to avoid segfault with CTkFrame in Canvas
-        main_frame = tk.Frame(padding_frame, bg=ModernColors.BG_DARK)
-        main_frame.pack(fill="both", expand=True, padx=25, pady=25)
-        
-        # Tạo window trong canvas để chứa padding_frame
-        canvas_window = canvas.create_window((0, 0), window=padding_frame, anchor="nw")
-        
-        # Hàm để cập nhật scroll region khi nội dung thay đổi
-        def configure_scroll_region(event=None):
-            canvas.update_idletasks()
-            bbox = canvas.bbox("all")
-            if bbox:
-                canvas.config(scrollregion=bbox)
-            # Cập nhật width của canvas window để fit với canvas
-            canvas_width = canvas.winfo_width()
-            if canvas_width > 1:
-                # Trừ đi space cho scrollbar (khoảng 20px)
-                canvas.itemconfig(canvas_window, width=canvas_width - 20)
-        
-        # Bind events để cập nhật scroll region
-        padding_frame.bind("<Configure>", configure_scroll_region)
-        main_frame.bind("<Configure>", configure_scroll_region)
-        canvas.bind("<Configure>", configure_scroll_region)
-        
-        # Cho phép cuộn bằng mouse wheel
-        def on_mousewheel(event):
-            # Kiểm tra nếu widget là text widget (có scroll riêng) thì không cuộn canvas
-            widget = event.widget
-            if isinstance(widget, (tk.Text, scrolledtext.ScrolledText)):
-                # Text widget tự xử lý scrolling
-                return
-            # Cuộn canvas
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        
-        # Hàm xử lý mouse wheel cho Linux
-        def on_linux_mousewheel(event, direction):
-            widget = event.widget
-            if isinstance(widget, (tk.Text, scrolledtext.ScrolledText)):
-                return
-            canvas.yview_scroll(direction, "units")
-        
-        # Bind mouse wheel (Windows/Mac) - FIX: Enable scrolling
-        try:
-            self.root.bind_all("<MouseWheel>", on_mousewheel)
-        except:
-            pass
-        # Linux mouse wheel - FIX: Enable scrolling
-        try:
-            self.root.bind_all("<Button-4>", lambda e: on_linux_mousewheel(e, -1))
-            self.root.bind_all("<Button-5>", lambda e: on_linux_mousewheel(e, 1))
-        except:
-            pass
-        
-        # Lưu canvas và main_frame để sử dụng sau
-        self.main_canvas = canvas
-        self.main_frame = main_frame
+        if CUSTOM_TK_AVAILABLE:
+            # Use CTkScrollableFrame for modern scrolling without segfaults
+            # This avoids the Canvas + Frame issues
+            self.main_frame = ctk.CTkScrollableFrame(
+                self.root,
+                fg_color=ModernColors.BG_DARK,
+                corner_radius=0
+            )
+            self.main_frame.pack(fill="both", expand=True)
+            
+            # Add some padding for the content inside
+            # We create a container frame inside the scrollable frame
+            content_container = ctk.CTkFrame(
+                self.main_frame, 
+                fg_color=ModernColors.BG_DARK
+            )
+            content_container.pack(fill="both", expand=True, padx=25, pady=25)
+            
+            # For compatibility, main_frame should be the container where widgets are added
+            self.scrollable_frame = self.main_frame # Keep reference
+            self.main_frame = content_container
+            parent = self.main_frame
+            
+        else:
+            # Tạo canvas với scrollbar để có thể cuộn (Standard Tkinter)
+            canvas_container = tk.Frame(self.root, bg=ModernColors.BG_DARK)
+            canvas_container.pack(fill="both", expand=True, side="top")
+            
+            # Canvas để chứa nội dung có thể cuộn
+            canvas = tk.Canvas(
+                canvas_container,
+                bg=ModernColors.BG_DARK,
+                highlightthickness=0
+            )
+            
+            # Scrollbar
+            scrollbar = ttk.Scrollbar(
+                canvas_container,
+                orient="vertical",
+                command=canvas.yview
+            )
+            
+            # Cấu hình canvas và scrollbar
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            # Pack scrollbar và canvas
+            scrollbar.pack(side="right", fill="y")
+            canvas.pack(side="left", fill="both", expand=True)
+            
+            # Tạo frame padding bên trong canvas (dùng để tạo padding)
+            padding_frame = tk.Frame(canvas, bg=ModernColors.BG_DARK)
+            
+            # Main container (bên trong padding_frame, có padding)
+            main_frame = tk.Frame(padding_frame, bg=ModernColors.BG_DARK)
+            main_frame.pack(fill="both", expand=True, padx=25, pady=25)
+            
+            # Tạo window trong canvas để chứa padding_frame
+            canvas_window = canvas.create_window((0, 0), window=padding_frame, anchor="nw")
+            
+            # Hàm để cập nhật scroll region khi nội dung thay đổi
+            def configure_scroll_region(event=None):
+                canvas.update_idletasks()
+                bbox = canvas.bbox("all")
+                if bbox:
+                    canvas.config(scrollregion=bbox)
+                # Cập nhật width của canvas window để fit với canvas
+                canvas_width = canvas.winfo_width()
+                if canvas_width > 1:
+                    # Trừ đi space cho scrollbar (khoảng 20px)
+                    canvas.itemconfig(canvas_window, width=canvas_width - 20)
+            
+            # Bind events để cập nhật scroll region
+            padding_frame.bind("<Configure>", configure_scroll_region)
+            main_frame.bind("<Configure>", configure_scroll_region)
+            canvas.bind("<Configure>", configure_scroll_region)
+            
+            # Cho phép cuộn bằng mouse wheel
+            def on_mousewheel(event):
+                # Kiểm tra nếu widget là text widget (có scroll riêng) thì không cuộn canvas
+                widget = event.widget
+                if isinstance(widget, (tk.Text, scrolledtext.ScrolledText)):
+                    # Text widget tự xử lý scrolling
+                    return
+                # Cuộn canvas
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            
+            # Hàm xử lý mouse wheel cho Linux
+            def on_linux_mousewheel(event, direction):
+                widget = event.widget
+                if isinstance(widget, (tk.Text, scrolledtext.ScrolledText)):
+                    return
+                canvas.yview_scroll(direction, "units")
+            
+            # Bind mouse wheel (Windows/Mac)
+            try:
+                self.root.bind_all("<MouseWheel>", on_mousewheel)
+            except:
+                pass
+            # Linux mouse wheel
+            try:
+                self.root.bind_all("<Button-4>", lambda e: on_linux_mousewheel(e, -1))
+                self.root.bind_all("<Button-5>", lambda e: on_linux_mousewheel(e, 1))
+            except:
+                pass
+            
+            self.main_canvas = canvas
+            self.main_frame = main_frame
+            parent = main_frame
+            
+            # Cập nhật scroll region lần đầu
+            self.root.after(100, configure_scroll_region)
         
         # Header với gradient effect (simulated)
-        self.create_header(main_frame)
+        self.create_header(parent)
         
         # Instructions card - Modern design
-        self.create_instructions_card(main_frame)
+        self.create_instructions_card(parent)
 
         # === NEW WORKFLOW: Accounts Overview at TOP ===
-        self.create_accounts_overview_card(main_frame)
+        self.create_accounts_overview_card(parent)
 
         # === Account selector - Select which account to manage ===
-        self.create_account_selector_card(main_frame)
+        self.create_account_selector_card(parent)
 
         # === Channel Management - Add channels to selected account ===
-        self.create_channel_management_card(main_frame)
+        self.create_channel_management_card(parent)
 
         # Login settings card - Cài đặt đăng nhập
-        self.create_login_settings_card(main_frame)
+        self.create_login_settings_card(parent)
 
         # Control buttons - Modern buttons
-        self.create_control_section(main_frame)
+        self.create_control_section(parent)
         
         # Progress section - Animated
-        self.create_progress_section(main_frame)
+        self.create_progress_section(parent)
         
         # Log section - Console style
-        self.create_log_section(main_frame)
+        self.create_log_section(parent)
         
         # Status bar - Minimal
         self.create_status_bar()
-        
-        # Cập nhật scroll region lần đầu
-        self.root.after(100, configure_scroll_region)
         
     def create_header(self, parent):
         """Tạo header đẹp với modern design"""
@@ -332,14 +357,32 @@ class YouTubeScraperGUI:
             header_frame = tk.Frame(parent, bg=ModernColors.BG_DARK)
         header_frame.pack(fill="x", pady=(0, 30))
         
-        # Title với modern font
+        # Title Container for alignment
         if CUSTOM_TK_AVAILABLE:
+            title_container = ctk.CTkFrame(header_frame, fg_color="transparent")
+            title_container.pack()
+            
+            # Main Title
             title_label = ctk.CTkLabel(
-                header_frame,
+                title_container,
                 text="🎥 YouTube Analytics Scraper",
-                font=ctk.CTkFont(size=36, weight="bold", family="Segoe UI"),
-                text_color=ModernColors.PRIMARY
+                font=ctk.CTkFont(size=32, weight="bold", family="Segoe UI"),
+                text_color=ModernColors.TEXT_WHITE
             )
+            title_label.pack(side="left", padx=(0, 10))
+            
+            # PRO Badge
+            badge = ctk.CTkLabel(
+                title_container,
+                text=" PRO ",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="#FFFFFF",
+                fg_color=ModernColors.PRIMARY,
+                corner_radius=6,
+                height=24
+            )
+            badge.pack(side="left", pady=5)
+            
         else:
             title_label = tk.Label(
                 header_frame,
@@ -348,25 +391,25 @@ class YouTubeScraperGUI:
                 fg=ModernColors.PRIMARY,
                 bg=ModernColors.BG_DARK
             )
-        title_label.pack()
+            title_label.pack()
         
         # Subtitle với better spacing
         if CUSTOM_TK_AVAILABLE:
             subtitle = ctk.CTkLabel(
                 header_frame,
-                text="Công cụ cào dữ liệu analytics chuyên nghiệp",
-                font=ctk.CTkFont(size=15),
+                text="Professional YouTube Analytics Scraping Tool • Version 2.0",
+                font=ctk.CTkFont(size=14),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             subtitle = tk.Label(
                 header_frame,
-                text="Công cụ cào dữ liệu analytics chuyên nghiệp",
+                text="Professional YouTube Analytics Scraping Tool • Version 2.0",
                 font=("Segoe UI", 13),
                 fg=ModernColors.TEXT_SECONDARY,
                 bg=ModernColors.BG_DARK
             )
-        subtitle.pack(pady=(8, 0))
+        subtitle.pack(pady=(5, 0))
         
     def create_instructions_card(self, parent):
         """Tạo card hướng dẫn với design hiện đại"""
@@ -407,7 +450,7 @@ class YouTubeScraperGUI:
             
             title_text = ctk.CTkLabel(
                 title_frame,
-                text="Yêu cầu quan trọng",
+                text="Important Requirements",
                 font=ctk.CTkFont(size=18, weight="bold"),
                 text_color=ModernColors.WARNING
             )
@@ -424,7 +467,7 @@ class YouTubeScraperGUI:
             
             title_text = tk.Label(
                 title_frame,
-                text="Yêu cầu quan trọng",
+                text="Important Requirements",
                 font=("Segoe UI", 16, "bold"),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.WARNING
@@ -433,12 +476,12 @@ class YouTubeScraperGUI:
         
         # Instructions với bullet points đẹp
         instructions = [
-            ("QUAN TRỌNG", "Bạn phải có quyền quản lý và truy cập kênh YouTube mới có thể cào dữ liệu được!", ModernColors.ERROR),
-            ("Bước 1", "Nhập link kênh YouTube (hỗ trợ: @channelname, /c/channel, /channel/UC...)", ModernColors.TEXT_PRIMARY),
-            ("Bước 2", "Nhấn 'Lấy danh sách video' để quét tất cả video trong kênh", ModernColors.TEXT_PRIMARY),
-            ("Bước 3", "Nhấn 'Bắt đầu cào dữ liệu' để thu thập thông tin analytics", ModernColors.TEXT_PRIMARY),
-            ("Bước 4", "Đăng nhập YouTube khi được yêu cầu (chỉ lần đầu tiên)", ModernColors.TEXT_PRIMARY),
-            ("Lưu ý", "Quá trình có thể mất vài phút tùy thuộc vào số lượng video", ModernColors.TEXT_SECONDARY)
+            ("IMPORTANT", "You must have management access to the YouTube channel to scrape data!", ModernColors.ERROR),
+            ("Step 1", "Enter YouTube channel link (supports: @channelname, /c/channel, /channel/UC...)", ModernColors.TEXT_PRIMARY),
+            ("Step 2", "Click 'Get Video List' to scan all videos in the channel", ModernColors.TEXT_PRIMARY),
+            ("Step 3", "Click 'Start Scraping' to collect analytics data", ModernColors.TEXT_PRIMARY),
+            ("Step 4", "Login to YouTube when prompted (first time only)", ModernColors.TEXT_PRIMARY),
+            ("Note", "The process may take a few minutes depending on the number of videos", ModernColors.TEXT_SECONDARY)
         ]
         
         for i, (label, text, color) in enumerate(instructions):
@@ -518,14 +561,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             title = ctk.CTkLabel(
                 card_content,
-                text="👤 Tài khoản Google",
+                text="👤 Google Account",
                 font=ctk.CTkFont(size=18, weight="bold"),
                 text_color=ModernColors.TEXT_PRIMARY
             )
         else:
             title = tk.Label(
                 card_content,
-                text="👤 Tài khoản Google",
+                text="👤 Google Account",
                 font=("Segoe UI", 16, "bold"),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_PRIMARY
@@ -540,14 +583,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             account_label = ctk.CTkLabel(
                 selector_frame,
-                text="Chọn tài khoản:",
+                text="Select Account:",
                 font=ctk.CTkFont(size=13),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             account_label = tk.Label(
                 selector_frame,
-                text="Chọn tài khoản:",
+                text="Select Account:",
                 font=("Segoe UI", 11),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY
@@ -584,7 +627,7 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             add_account_btn = ctk.CTkButton(
                 selector_frame,
-                text="➕ Tài khoản mới",
+                text="➕ New Account",
                 command=self.on_add_new_account,
                 font=ctk.CTkFont(size=12),
                 fg_color=ModernColors.SUCCESS,
@@ -595,7 +638,7 @@ class YouTubeScraperGUI:
         else:
             add_account_btn = tk.Button(
                 selector_frame,
-                text="➕ Tài khoản mới",
+                text="➕ New Account",
                 command=self.on_add_new_account,
                 font=("Segoe UI", 11),
                 bg=ModernColors.SUCCESS,
@@ -614,14 +657,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             self.account_status_label = ctk.CTkLabel(
                 status_frame,
-                text="Trạng thái: Chưa chọn tài khoản",
+                text="Status: No account selected",
                 font=ctk.CTkFont(size=11),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             self.account_status_label = tk.Label(
                 status_frame,
-                text="Trạng thái: Chưa chọn tài khoản",
+                text="Status: No account selected",
                 font=("Segoe UI", 10),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY
@@ -663,14 +706,14 @@ class YouTubeScraperGUI:
             if CUSTOM_TK_AVAILABLE:
                 title = ctk.CTkLabel(
                     card_content,
-                    text="📋 Chọn tài khoản cần cào hôm nay",
+                    text="📋 Select Accounts to Scrape Today",
                     font=ctk.CTkFont(size=18, weight="bold"),
                     text_color=ModernColors.TEXT_PRIMARY
                 )
             else:
                 title = tk.Label(
                     card_content,
-                    text="📋 Chọn tài khoản cần cào hôm nay",
+                    text="📋 Select Accounts to Scrape Today",
                     font=("Segoe UI", 16, "bold"),
                     bg=ModernColors.BG_CARD,
                     fg=ModernColors.TEXT_PRIMARY
@@ -724,7 +767,7 @@ class YouTubeScraperGUI:
                     else:
                         no_accounts = tk.Label(
                             accounts_list_frame,
-                            text="Không có tài khoản nào. Vui lòng thêm tài khoản mới.",
+                            text="No accounts found. Please add a new account.",
                             font=("Segoe UI", 10),
                             bg=ModernColors.BG_CARD,
                             fg=ModernColors.TEXT_SECONDARY
@@ -733,7 +776,7 @@ class YouTubeScraperGUI:
             else:
                 no_config = tk.Label(
                     accounts_list_frame,
-                    text="Không tìm thấy config.json",
+                    text="config.json not found",
                     font=("Segoe UI", 10),
                     bg=ModernColors.BG_CARD,
                     fg=ModernColors.TEXT_SECONDARY
@@ -746,7 +789,7 @@ class YouTubeScraperGUI:
 
             select_all_btn = tk.Button(
                 button_frame,
-                text="✓ Chọn tất cả",
+                text="✓ Select All",
                 command=self.select_all_accounts,
                 font=("Segoe UI", 11),
                 bg=ModernColors.ACCENT,
@@ -2006,14 +2049,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             title = ctk.CTkLabel(
                 card_content,
-                text="🔐 Cài đặt đăng nhập Google",
+                text="🔐 Google Login Settings",
                 font=ctk.CTkFont(size=18, weight="bold"),
                 text_color=ModernColors.TEXT_PRIMARY
             )
         else:
             title = tk.Label(
                 card_content,
-                text="🔐 Cài đặt đăng nhập Google",
+                text="🔐 Google Login Settings",
                 font=("Segoe UI", 16, "bold"),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_PRIMARY
@@ -2029,7 +2072,7 @@ class YouTubeScraperGUI:
             self.auto_continue_var = tk.BooleanVar(value=self.auto_continue)
             self.auto_continue_checkbox = ctk.CTkCheckBox(
                 controls_frame,
-                text="Tự động tiếp tục sau đăng nhập",
+                text="Auto-continue after login",
                 variable=self.auto_continue_var,
                 command=self.toggle_auto_continue,
                 font=ctk.CTkFont(size=13),
@@ -2039,7 +2082,7 @@ class YouTubeScraperGUI:
             self.auto_continue_var = tk.BooleanVar(value=self.auto_continue)
             self.auto_continue_checkbox = tk.Checkbutton(
                 controls_frame,
-                text="Tự động tiếp tục sau đăng nhập",
+                text="Auto-continue after login",
                 variable=self.auto_continue_var,
                 command=self.toggle_auto_continue,
                 font=("Segoe UI", 11),
@@ -2058,14 +2101,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             wait_label = ctk.CTkLabel(
                 wait_frame,
-                text="Thời gian chờ:",
+                text="Wait time:",
                 font=ctk.CTkFont(size=13),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             wait_label = tk.Label(
                 wait_frame,
-                text="Thời gian chờ:",
+                text="Wait time:",
                 font=("Segoe UI", 11),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY
@@ -2098,14 +2141,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             seconds_label = ctk.CTkLabel(
                 wait_frame,
-                text="giây",
+                text="seconds",
                 font=ctk.CTkFont(size=13),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             seconds_label = tk.Label(
                 wait_frame,
-                text="giây",
+                text="seconds",
                 font=("Segoe UI", 11),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY
@@ -2116,7 +2159,7 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             desc_label = ctk.CTkLabel(
                 card_content,
-                text="Khi bật, script sẽ tự động tiếp tục sau thời gian chờ thay vì yêu cầu nhấn Enter",
+                text="When enabled, script will auto-continue after wait time instead of asking to press Enter",
                 font=ctk.CTkFont(size=12),
                 text_color=ModernColors.TEXT_SECONDARY,
                 wraplength=600
@@ -2124,7 +2167,7 @@ class YouTubeScraperGUI:
         else:
             desc_label = tk.Label(
                 card_content,
-                text="Khi bật, script sẽ tự động tiếp tục sau thời gian chờ thay vì yêu cầu nhấn Enter",
+                text="When enabled, script will auto-continue after wait time instead of asking to press Enter",
                 font=("Segoe UI", 10),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY,
@@ -2143,8 +2186,8 @@ class YouTubeScraperGUI:
             self.wait_time_entry.delete(0, tk.END)
             self.wait_time_entry.insert(0, "30")
 
-        status = "Bật" if self.auto_continue else "Tắt"
-        self.log_message(f"Tự động tiếp tục sau đăng nhập: {status} (chờ {self.wait_time}s)", "INFO")
+        status = "On" if self.auto_continue else "Off"
+        self.log_message(f"Auto-continue after login: {status} (wait {self.wait_time}s)", "INFO")
 
     def show_login_dialog(self, account_name=None, cookies_file=None):
         """Hiển thị dialog đăng nhập YouTube thay vì dùng terminal"""
@@ -2395,7 +2438,10 @@ class YouTubeScraperGUI:
         control_frame.pack(fill="x", pady=(0, 20))
         
         # Buttons container với grid layout
-        buttons_container = tk.Frame(control_frame, bg=ModernColors.BG_DARK)
+        if CUSTOM_TK_AVAILABLE:
+            buttons_container = ctk.CTkFrame(control_frame, fg_color="transparent")
+        else:
+            buttons_container = tk.Frame(control_frame, bg=ModernColors.BG_DARK)
         buttons_container.pack()
         
         # Button style function
@@ -2433,12 +2479,15 @@ class YouTubeScraperGUI:
             return btn
         
         # Row 1: Video retrieval button
-        row1 = tk.Frame(buttons_container, bg=ModernColors.BG_DARK)
+        if CUSTOM_TK_AVAILABLE:
+            row1 = ctk.CTkFrame(buttons_container, fg_color="transparent")
+        else:
+            row1 = tk.Frame(buttons_container, bg=ModernColors.BG_DARK)
         row1.pack(pady=5)
 
         get_videos_btn = create_button(
             row1,
-            "📹 Lấy danh sách video",
+            "📹 Get Video List",
             self.get_channel_videos,
             ModernColors.ACCENT,
             "#357ABD",
@@ -2448,7 +2497,7 @@ class YouTubeScraperGUI:
 
         self.start_btn = create_button(
             row1,
-            "🚀 Cào tài khoản đã chọn",
+            "🚀 Scrape Selected Accounts",
             self.start_batch_scraping,
             ModernColors.SUCCESS,
             "#00CC66",
@@ -2457,12 +2506,15 @@ class YouTubeScraperGUI:
         self.start_btn.pack(side="left", padx=8)
 
         # Row 2: Control buttons
-        row2 = tk.Frame(buttons_container, bg=ModernColors.BG_DARK)
+        if CUSTOM_TK_AVAILABLE:
+            row2 = ctk.CTkFrame(buttons_container, fg_color="transparent")
+        else:
+            row2 = tk.Frame(buttons_container, bg=ModernColors.BG_DARK)
         row2.pack(pady=5)
 
         self.stop_btn = create_button(
             row2,
-            "⏹️ Dừng",
+            "⏹️ Stop",
             self.stop_process,
             ModernColors.ERROR,
             "#CC0000",
@@ -2473,7 +2525,7 @@ class YouTubeScraperGUI:
 
         clear_btn = create_button(
             row2,
-            "🗑️ Xóa log",
+            "🗑️ Clear Log",
             self.clear_log,
             "#6C757D",
             "#5A6268",
@@ -2511,14 +2563,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             title = ctk.CTkLabel(
                 content,
-                text="📊 Tiến trình",
+                text="📊 Progress",
                 font=ctk.CTkFont(size=16, weight="bold"),
                 text_color=ModernColors.TEXT_PRIMARY
             )
         else:
             title = tk.Label(
                 content,
-                text="📊 Tiến trình",
+                text="📊 Progress",
                 font=("Segoe UI", 14, "bold"),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_PRIMARY
@@ -2562,14 +2614,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             self.progress_label = ctk.CTkLabel(
                 content,
-                text="Sẵn sàng...",
+                text="Ready...",
                 font=ctk.CTkFont(size=13),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             self.progress_label = tk.Label(
                 content,
-                text="Sẵn sàng...",
+                text="Ready...",
                 font=("Segoe UI", 11),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY
@@ -2604,14 +2656,14 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             title = ctk.CTkLabel(
                 header,
-                text="📝 Nhật ký hoạt động",
+                text="📝 Activity Log",
                 font=ctk.CTkFont(size=16, weight="bold"),
                 text_color=ModernColors.TEXT_PRIMARY
             )
         else:
             title = tk.Label(
                 header,
-                text="📝 Nhật ký hoạt động",
+                text="📝 Activity Log",
                 font=("Segoe UI", 14, "bold"),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_PRIMARY
@@ -2624,7 +2676,7 @@ class YouTubeScraperGUI:
                 log_frame,
                 height=180,
                 font=ctk.CTkFont(size=11, family="Consolas"),
-                fg_color=ModernColors.BG_CARD,
+                fg_color=ModernColors.BG_DARK,
                 text_color=ModernColors.TEXT_PRIMARY,
                 corner_radius=8,
                 border_width=2,
@@ -2657,7 +2709,7 @@ class YouTubeScraperGUI:
         if CUSTOM_TK_AVAILABLE:
             self.status_bar = ctk.CTkLabel(
                 self.root,
-                text="● Sẵn sàng | YouTube Analytics Scraper v1.0",
+                text="● Ready | YouTube Analytics Scraper v1.0",
                 height=30,
                 font=ctk.CTkFont(size=11),
                 text_color=ModernColors.TEXT_SECONDARY,
@@ -2671,7 +2723,7 @@ class YouTubeScraperGUI:
             
             self.status_bar = tk.Label(
                 status_container,
-                text="● Sẵn sàng | YouTube Analytics Scraper v1.0",
+                text="● Ready | YouTube Analytics Scraper v1.0",
                 font=("Segoe UI", 10),
                 bg=ModernColors.BG_CARD,
                 fg=ModernColors.TEXT_SECONDARY,
