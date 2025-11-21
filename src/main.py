@@ -28,22 +28,18 @@ os.chdir(project_root)
 print(f"Working directory: {os.getcwd()}")
 print(f"Python path includes: {project_root}")
 
-# Import tkinter AFTER setting up paths
+# CRITICAL: Patch Tcl BEFORE any tkinter import to prevent segmentation fault
+# This must happen before tkinter is imported
+os.environ['TK_SILENCE_DEPRECATION'] = '1'
+
+# Tcl patching is now handled inside YouTubeScraperGUI.__init__
+# to ensure it applies to the actual application interpreter
+
+# Import tkinter AFTER patching
 import tkinter as tk
 
-# Test if display is available
-try:
-    test_root = tk.Tk()
-    test_root.withdraw()
-    test_root.destroy()
-    print("✓ Display connection successful")
-except Exception as e:
-    print(f"✗ Display error: {e}")
-    print("\nPossible solutions:")
-    print("1. Make sure you're running in a graphical environment")
-    print("2. If using SSH, enable X11 forwarding: ssh -X user@host")
-    print("3. Set DISPLAY variable: export DISPLAY=:0")
-    sys.exit(1)
+# Display test removed to prevent extra Tk instance creation
+# The main app initialization will catch display errors if they occur
 
 from src.gui.app import YouTubeScraperGUI
 
@@ -53,7 +49,7 @@ def main():
     try:
         print("Starting YouTube Analytics Scraper...")
         app = YouTubeScraperGUI()
-        app.root.mainloop()
+        app.run()
     except KeyboardInterrupt:
         print("\n✓ Application closed by user")
         sys.exit(0)
