@@ -1,0 +1,29 @@
+{
+  "accounts": [
+    {
+      "name": "Account1",
+      "cookies_file": "data/cookies/profile/youtube_cookies_Account1.json",
+      "channels": [
+        {
+          "url": "https://www.youtube.com/channel/YOUR_CHANNEL_ID",
+          "video_ids": [
+            "VIDEO_ID_1",
+            "VIDEO_ID_2"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Account2",
+      "cookies_file": "data/cookies/profile/youtube_cookies_Account2.json",
+      "channels": [
+        {
+          "url": "https://www.youtube.com/@your_channel_handle",
+          "video_ids": [
+            "VIDEO_ID_1"
+          ]
+        }
+      ]
+    }
+  ]
+}
