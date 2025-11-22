@@ -1,0 +1,9 @@
+{
+    "backend_url": "http://localhost:8000",
+    "api_timeout": 30,
+    "theme": "dark",
+    "window_size": "1200x800",
+    "auto_connect": true,
+    "cache_enabled": true,
+    "log_level": "INFO"
+}

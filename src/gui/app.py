@@ -1,11 +1,3 @@
-"""
-GUI Application for YouTube Channel Data Scraping
-Ứng dụng GUI để cào dữ liệu kênh YouTube - Modern Design
-
-Tác giả: YouTube Analytics Scraper
-Ngày tạo: 2024
-"""
-
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, font as tkFont, simpledialog
 from datetime import datetime
@@ -54,7 +46,6 @@ from src.database.connection import db
 
 
 class ModernColors:
-    """Modern color palette - Professional & Clean (Dark Mode)"""
     # Primary colors
     PRIMARY = "#3B82F6"  # Bright Blue
     PRIMARY_DARK = "#1D4ED8"
@@ -205,7 +196,7 @@ class YouTubeScraperGUI:
         # self.root.after(50, self.maximize_window)
 
         # Khởi tạo logic nghiệp vụ
-    # self.init_business_logic() - DISABLED FOR DEBUGGING
+        self.init_business_logic()
         
     def center_window(self):
         """Căn giữa cửa sổ ban đầu"""
@@ -350,538 +341,120 @@ class YouTubeScraperGUI:
             
             # Cập nhật scroll region lần đầu
             self.root.after(100, configure_scroll_region)
-        
-        # Header với gradient effect (simulated)
+        # Header
         self.create_header(parent)
         
-        # Instructions card - Modern design
+        # Instructions
         self.create_instructions_card(parent)
 
-        # === NEW WORKFLOW: Accounts Overview at TOP ===
+        # === 1. Account Management (Top) ===
+        self.create_account_selector_card(parent)
+        self.create_channel_management_card(parent)
+        
+        # === 2. Accounts Overview (Middle) ===
         self.create_accounts_overview_card(parent)
 
-        # === Account selector - Select which account to manage ===
-        self.create_account_selector_card(parent)
-
-        # === Channel Management - Add channels to selected account ===
-        self.create_channel_management_card(parent)
-
-        # Login settings card - Cài đặt đăng nhập
+        # === 3. Controls & Logs (Bottom) ===
         self.create_login_settings_card(parent)
-
-        # Control buttons - Modern buttons
         self.create_control_section(parent)
-        
-        # Progress section - Animated
         self.create_progress_section(parent)
-        
-        # Log section - Console style
         self.create_log_section(parent)
-        
-        # Status bar - Minimal
         self.create_status_bar()
-        
+
     def create_header(self, parent):
         """Tạo header đẹp với modern design"""
         if CUSTOM_TK_AVAILABLE:
             header_frame = ctk.CTkFrame(parent, fg_color="transparent")
         else:
             header_frame = tk.Frame(parent, bg=ModernColors.BG_DARK)
-        header_frame.pack(fill="x", pady=(0, 30))
+        header_frame.pack(fill="x", pady=(0, 20))
         
-        # Title Container for alignment
+        # Title
         if CUSTOM_TK_AVAILABLE:
-            title_container = ctk.CTkFrame(header_frame, fg_color="transparent")
-            title_container.pack()
-            
-            # Main Title
-            title_label = ctk.CTkLabel(
-                title_container,
-                text="🎥 YouTube Analytics Scraper",
-                font=ctk.CTkFont(size=32, weight="bold", family="Segoe UI"),
-                text_color=ModernColors.TEXT_WHITE
+            title = ctk.CTkLabel(
+                header_frame, 
+                text="YOUTUBE ANALYTICS SCRAPER",
+                font=ctk.CTkFont(size=24, weight="bold"),
+                text_color=ModernColors.PRIMARY
             )
-            title_label.pack(side="left", padx=(0, 10))
-            
-            # PRO Badge
-            badge = ctk.CTkLabel(
-                title_container,
-                text=" PRO ",
-                font=ctk.CTkFont(size=12, weight="bold"),
-                text_color="#FFFFFF",
-                fg_color=ModernColors.PRIMARY,
-                corner_radius=6,
-                height=24
-            )
-            badge.pack(side="left", pady=5)
-            
         else:
-            title_label = tk.Label(
+            title = tk.Label(
                 header_frame,
-                text="🎥 YouTube Analytics Scraper",
-                font=("Segoe UI", 32, "bold"),
-                fg=ModernColors.PRIMARY,
-                bg=ModernColors.BG_DARK
+                text="YOUTUBE ANALYTICS SCRAPER",
+                font=("Segoe UI", 20, "bold"),
+                bg=ModernColors.BG_DARK,
+                fg=ModernColors.PRIMARY
             )
-            title_label.pack()
+        title.pack()
         
-        # Subtitle với better spacing
+        # Subtitle
         if CUSTOM_TK_AVAILABLE:
             subtitle = ctk.CTkLabel(
                 header_frame,
-                text="Professional YouTube Analytics Scraping Tool • Version 2.0",
-                font=ctk.CTkFont(size=14),
+                text="Professional Data Extraction Tool",
+                font=ctk.CTkFont(size=12),
                 text_color=ModernColors.TEXT_SECONDARY
             )
         else:
             subtitle = tk.Label(
                 header_frame,
-                text="Professional YouTube Analytics Scraping Tool • Version 2.0",
-                font=("Segoe UI", 13),
-                fg=ModernColors.TEXT_SECONDARY,
-                bg=ModernColors.BG_DARK
+                text="Professional Data Extraction Tool",
+                font=("Segoe UI", 10),
+                bg=ModernColors.BG_DARK,
+                fg=ModernColors.TEXT_SECONDARY
             )
-        subtitle.pack(pady=(5, 0))
-        
+        subtitle.pack()
+
     def create_instructions_card(self, parent):
-        """Tạo card hướng dẫn với design hiện đại"""
+        """Tạo card hướng dẫn"""
         if CUSTOM_TK_AVAILABLE:
-            card = ctk.CTkFrame(
-                parent,
-                fg_color=ModernColors.BG_CARD,
-                corner_radius=12,
-                border_width=1,
-                border_color=ModernColors.BORDER
-            )
+            card = ctk.CTkFrame(parent, fg_color=ModernColors.BG_CARD)
         else:
-            card = tk.Frame(
-                parent,
-                bg=ModernColors.BG_CARD,
-                relief=tk.FLAT,
-                bd=1,
-                highlightbackground=ModernColors.BORDER,
-                highlightthickness=1
-            )
+            card = tk.Frame(parent, bg=ModernColors.BG_CARD)
         card.pack(fill="x", pady=(0, 20))
         
-        # Card padding
-        card_content = tk.Frame(card, bg=ModernColors.BG_CARD)
-        card_content.pack(fill="both", padx=20, pady=20)
+        content = tk.Frame(card, bg=ModernColors.BG_CARD)
+        content.pack(fill="both", padx=20, pady=15)
         
-        # Warning icon và title
-        title_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-        title_frame.pack(fill="x", pady=(0, 15))
-        
-        if CUSTOM_TK_AVAILABLE:
-            warning_icon = ctk.CTkLabel(
-                title_frame,
-                text="⚠️",
-                font=ctk.CTkFont(size=24)
-            )
-            warning_icon.pack(side="left", padx=(0, 10))
-            
-            title_text = ctk.CTkLabel(
-                title_frame,
-                text="Important Requirements",
-                font=ctk.CTkFont(size=18, weight="bold"),
-                text_color=ModernColors.WARNING
-            )
-            title_text.pack(side="left")
-        else:
-            warning_icon = tk.Label(
-                title_frame,
-                text="⚠️",
-                font=("Arial", 20),
-                bg=ModernColors.BG_CARD,
-                fg=ModernColors.WARNING
-            )
-            warning_icon.pack(side="left", padx=(0, 10))
-            
-            title_text = tk.Label(
-                title_frame,
-                text="Important Requirements",
-                font=("Segoe UI", 16, "bold"),
-                bg=ModernColors.BG_CARD,
-                fg=ModernColors.WARNING
-            )
-            title_text.pack(side="left")
-        
-        # Instructions với bullet points đẹp
-        instructions = [
-            ("IMPORTANT", "You must have management access to the YouTube channel to scrape data!", ModernColors.ERROR),
-            ("Step 1", "Enter YouTube channel link (supports: @channelname, /c/channel, /channel/UC...)", ModernColors.TEXT_PRIMARY),
-            ("Step 2", "Click 'Get Video List' to scan all videos in the channel", ModernColors.TEXT_PRIMARY),
-            ("Step 3", "Click 'Start Scraping' to collect analytics data", ModernColors.TEXT_PRIMARY),
-            ("Step 4", "Login to YouTube when prompted (first time only)", ModernColors.TEXT_PRIMARY),
-            ("Note", "The process may take a few minutes depending on the number of videos", ModernColors.TEXT_SECONDARY)
-        ]
-        
-        for i, (label, text, color) in enumerate(instructions):
-            item_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-            item_frame.pack(fill="x", pady=8)
-            
-            # Bullet point
-            if CUSTOM_TK_AVAILABLE:
-                bullet = ctk.CTkLabel(
-                    item_frame,
-                    text="•" if i > 0 else "⚠",
-                    font=ctk.CTkFont(size=16),
-                    text_color=color,
-                    width=20
-                )
-            else:
-                bullet = tk.Label(
-                    item_frame,
-                    text="•" if i > 0 else "⚠",
-                    font=("Arial", 14),
-                    bg=ModernColors.BG_CARD,
-                    fg=color,
-                    width=2
-                )
-            bullet.pack(side="left")
-            
-            # Text
-            if CUSTOM_TK_AVAILABLE:
-                label_widget = ctk.CTkLabel(
-                    item_frame,
-                    text=f"<{label}> {text}",
-                    font=ctk.CTkFont(size=12),
-                    text_color=color,
-                    anchor="w",
-                    justify="left"
-                )
-            else:
-                label_widget = tk.Label(
-                    item_frame,
-                    text=f"<{label}> {text}",
-                    font=("Segoe UI", 11),
-                    bg=ModernColors.BG_CARD,
-                    fg=color,
-                    anchor="w",
-                    justify="left"
-                )
-            label_widget.pack(side="left", fill="x", expand=True)
+        tk.Label(content, text="💡 Quick Guide:", font=("Segoe UI", 11, "bold"), bg=ModernColors.BG_CARD, fg=ModernColors.TEXT_PRIMARY).pack(anchor="w")
+        tk.Label(content, text="1. Select or Create an Account\n2. Add Channels to scrape\n3. Select Accounts in Overview\n4. Click 'Scrape Selected Accounts'", justify="left", font=("Segoe UI", 10), bg=ModernColors.BG_CARD, fg=ModernColors.TEXT_SECONDARY).pack(anchor="w", pady=(5, 0))
 
     def create_account_selector_card(self, parent):
-        """
-        Tạo card chọn tài khoản - hiển thị danh sách tài khoản đã lưu
-        Cho phép chuyển đổi tài khoản mà không cần đăng nhập lại
-        """
+        """Tạo card chọn tài khoản"""
         if CUSTOM_TK_AVAILABLE:
-            card = ctk.CTkFrame(
-                parent,
-                fg_color=ModernColors.BG_CARD,
-                corner_radius=12,
-                border_width=1,
-                border_color=ModernColors.BORDER
-            )
+            card = ctk.CTkFrame(parent, fg_color=ModernColors.BG_CARD)
         else:
-            card = tk.Frame(
-                parent,
-                bg=ModernColors.BG_CARD,
-                relief=tk.FLAT,
-                bd=1,
-                highlightbackground=ModernColors.BORDER,
-                highlightthickness=1
-            )
+            card = tk.Frame(parent, bg=ModernColors.BG_CARD)
         card.pack(fill="x", pady=(0, 20))
-
-        card_content = tk.Frame(card, bg=ModernColors.BG_CARD)
-        card_content.pack(fill="both", padx=20, pady=20)
-
-        # === TITLE ===
+        
+        content = tk.Frame(card, bg=ModernColors.BG_CARD)
+        content.pack(fill="both", padx=20, pady=20)
+        
+        # Title
+        tk.Label(content, text="👤 ACCOUNT MANAGEMENT", font=("Segoe UI", 12, "bold"), bg=ModernColors.BG_CARD, fg=ModernColors.TEXT_PRIMARY).pack(anchor="w", pady=(0, 10))
+        
+        # Dropdown and Add Button
+        row = tk.Frame(content, bg=ModernColors.BG_CARD)
+        row.pack(fill="x")
+        
+        # Dropdown
+        self.account_var = tk.StringVar()
         if CUSTOM_TK_AVAILABLE:
-            title = ctk.CTkLabel(
-                card_content,
-                text="👤 Google Account",
-                font=ctk.CTkFont(size=18, weight="bold"),
-                text_color=ModernColors.TEXT_PRIMARY
-            )
+            self.account_dropdown = ctk.CTkComboBox(row, variable=self.account_var, width=300, command=self.on_account_changed)
         else:
-            title = tk.Label(
-                card_content,
-                text="👤 Google Account",
-                font=("Segoe UI", 16, "bold"),
-                bg=ModernColors.BG_CARD,
-                fg=ModernColors.TEXT_PRIMARY
-            )
-        title.pack(anchor="w", pady=(0, 15))
-
-        # === ACCOUNT SELECTOR FRAME ===
-        selector_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-        selector_frame.pack(fill="x", pady=(0, 10))
-
-        # Label for account dropdown
+            self.account_dropdown = ttk.Combobox(row, textvariable=self.account_var, width=40)
+            self.account_dropdown.bind("<<ComboboxSelected>>", self.on_account_changed)
+        self.account_dropdown.pack(side="left", padx=(0, 10))
+        
+        # Add Button
         if CUSTOM_TK_AVAILABLE:
-            account_label = ctk.CTkLabel(
-                selector_frame,
-                text="Select Account:",
-                font=ctk.CTkFont(size=13),
-                text_color=ModernColors.TEXT_SECONDARY
-            )
+            tk.Button(row, text="➕ New Account", command=self.on_add_new_account, bg=ModernColors.ACCENT, fg="white", relief=tk.FLAT, padx=10, pady=5).pack(side="left")
         else:
-            account_label = tk.Label(
-                selector_frame,
-                text="Select Account:",
-                font=("Segoe UI", 11),
-                bg=ModernColors.BG_CARD,
-                fg=ModernColors.TEXT_SECONDARY
-            )
-        account_label.pack(side="left", padx=(0, 10))
-
-        # Account dropdown
-        if CUSTOM_TK_AVAILABLE:
-            self.account_dropdown = ctk.CTkComboBox(
-                selector_frame,
-                variable=self.account_var,
-                values=self.get_account_names(),
-                command=self.on_account_changed,
-                height=35,
-                font=ctk.CTkFont(size=12),
-                corner_radius=8,
-                state="readonly"
-            )
-        else:
-            self.account_dropdown = ttk.Combobox(
-                selector_frame,
-                textvariable=self.account_var,
-                values=self.get_account_names(),
-                font=("Segoe UI", 11),
-                state="readonly",
-                width=30
-            )
-            self.account_dropdown.bind("<<ComboboxSelected>>",
-                                       lambda e: self.on_account_changed(None))
-
-        self.account_dropdown.pack(side="left", fill="x", expand=True, padx=(0, 10))
-
-        # === ADD NEW ACCOUNT BUTTON ===
-        if CUSTOM_TK_AVAILABLE:
-            add_account_btn = ctk.CTkButton(
-                selector_frame,
-                text="➕ New Account",
-                command=self.on_add_new_account,
-                font=ctk.CTkFont(size=12),
-                fg_color=ModernColors.SUCCESS,
-                hover_color=ModernColors.PRIMARY_DARK,
-                height=35,
-                corner_radius=8
-            )
-        else:
-            add_account_btn = tk.Button(
-                selector_frame,
-                text="➕ New Account",
-                command=self.on_add_new_account,
-                font=("Segoe UI", 11),
-                bg=ModernColors.SUCCESS,
-                fg="white",
-                padx=12,
-                pady=6,
-                relief=tk.FLAT,
-                bd=0
-            )
-        add_account_btn.pack(side="right")
-
-        # === SESSION STATUS ===
-        status_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-        status_frame.pack(fill="x", pady=(10, 0))
-
-        if CUSTOM_TK_AVAILABLE:
-            self.account_status_label = ctk.CTkLabel(
-                status_frame,
-                text="Status: No account selected",
-                font=ctk.CTkFont(size=11),
-                text_color=ModernColors.TEXT_SECONDARY
-            )
-        else:
-            self.account_status_label = tk.Label(
-                status_frame,
-                text="Status: No account selected",
-                font=("Segoe UI", 10),
-                bg=ModernColors.BG_CARD,
-                fg=ModernColors.TEXT_SECONDARY
-            )
-        self.account_status_label.pack(anchor="w")
-
-        # Store reference to this card for later updates
-        self.account_selector_card = card_content
-
-    def create_batch_account_selector_card(self, parent):
-        """
-        Tạo card chọn tài khoản cần cào hôm nay
-        Hiển thị danh sách toggle switches cho từng tài khoản
-        """
-        try:
-            if CUSTOM_TK_AVAILABLE:
-                card = ctk.CTkFrame(
-                    parent,
-                    fg_color=ModernColors.BG_CARD,
-                    corner_radius=12,
-                    border_width=1,
-                    border_color=ModernColors.BORDER
-                )
-            else:
-                card = tk.Frame(
-                    parent,
-                    bg=ModernColors.BG_CARD,
-                    relief=tk.FLAT,
-                    bd=1,
-                    highlightbackground=ModernColors.BORDER,
-                    highlightthickness=1
-                )
-            card.pack(fill="x", pady=(0, 20))
-
-            card_content = tk.Frame(card, bg=ModernColors.BG_CARD)
-            card_content.pack(fill="both", padx=20, pady=20)
-
-            # === TITLE ===
-            if CUSTOM_TK_AVAILABLE:
-                title = ctk.CTkLabel(
-                    card_content,
-                    text="📋 Select Accounts to Scrape Today",
-                    font=ctk.CTkFont(size=18, weight="bold"),
-                    text_color=ModernColors.TEXT_PRIMARY
-                )
-            else:
-                title = tk.Label(
-                    card_content,
-                    text="📋 Select Accounts to Scrape Today",
-                    font=("Segoe UI", 16, "bold"),
-                    bg=ModernColors.BG_CARD,
-                    fg=ModernColors.TEXT_PRIMARY
-                )
-            title.pack(anchor="w", pady=(0, 15))
-
-            # === ACCOUNTS FRAME ===
-            accounts_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-            accounts_frame.pack(fill="x", pady=(0, 15))
-
-            # Create a frame to hold all account toggles
-            accounts_list_frame = tk.Frame(accounts_frame, bg=ModernColors.BG_CARD)
-            accounts_list_frame.pack(fill="x")
-
-            # Load accounts from config
-            if os.path.exists('config.json'):
-                with open('config.json', 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    accounts = config.get('accounts', [])
-
-                    if accounts:
-                        # Create toggle for each account
-                        for account in accounts:
-                            account_name = account.get('name', 'Unknown')
-                            channels = account.get('channels', [])
-                            total_videos = sum(len(ch.get('video_ids', [])) for ch in channels)
-
-                            # Create toggle variable
-                            if account_name not in self.selected_accounts:
-                                self.selected_accounts[account_name] = tk.BooleanVar(value=True)
-
-                            # Create account row frame - use grid for better layout
-                            account_row = tk.Frame(accounts_list_frame, bg=ModernColors.BG_CARD)
-                            account_row.pack(fill="x", pady=(0, 10))
-
-                            # Toggle checkbox - use grid instead of side=left
-                            toggle = tk.Checkbutton(
-                                account_row,
-                                text=f"✓ {account_name} ({len(channels)} kênh, {total_videos} video)",
-                                variable=self.selected_accounts[account_name],
-                                font=("Segoe UI", 11),
-                                bg=ModernColors.BG_CARD,
-                                fg=ModernColors.TEXT_PRIMARY,
-                                activebackground=ModernColors.BG_CARD,
-                                activeforeground=ModernColors.TEXT_PRIMARY,
-                                selectcolor=ModernColors.BG_CARD
-                            )
-                            toggle.pack(anchor="w")
-                            self.batch_scraping_widgets[account_name] = toggle
-
-                    else:
-                        no_accounts = tk.Label(
-                            accounts_list_frame,
-                            text="No accounts found. Please add a new account.",
-                            font=("Segoe UI", 10),
-                            bg=ModernColors.BG_CARD,
-                            fg=ModernColors.TEXT_SECONDARY
-                        )
-                        no_accounts.pack(anchor="w")
-            else:
-                no_config = tk.Label(
-                    accounts_list_frame,
-                    text="config.json not found",
-                    font=("Segoe UI", 10),
-                    bg=ModernColors.BG_CARD,
-                    fg=ModernColors.TEXT_SECONDARY
-                )
-                no_config.pack(anchor="w")
-
-            # === SELECT ALL / DESELECT ALL BUTTONS ===
-            button_frame = tk.Frame(card_content, bg=ModernColors.BG_CARD)
-            button_frame.pack(fill="x", pady=(0, 10))
-
-            select_all_btn = tk.Button(
-                button_frame,
-                text="✓ Select All",
-                command=self.select_all_accounts,
-                font=("Segoe UI", 11),
-                bg=ModernColors.ACCENT,
-                fg="white",
-                padx=12,
-                pady=6,
-                relief=tk.FLAT,
-                bd=0
-            )
-            select_all_btn.pack(side="left", padx=(0, 10))
-
-            deselect_all_btn = tk.Button(
-                button_frame,
-                text="✗ Bỏ chọn tất cả",
-                command=self.deselect_all_accounts,
-                font=("Segoe UI", 11),
-                bg="#6C757D",
-                fg="white",
-                padx=12,
-                pady=6,
-                relief=tk.FLAT,
-                bd=0
-            )
-            deselect_all_btn.pack(side="left")
-
-            # Store reference
-            self.batch_selector_card = card_content
-
-        except Exception as e:
-            print(f"Error creating batch account selector card: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
-    def refresh_batch_account_selector(self):
-        """
-        Refresh the batch account selector card to show updated accounts
-        Called after adding new account to show it in the selector
-        """
-        try:
-            # Remove old card if it exists
-            if hasattr(self, 'batch_selector_card') and self.batch_selector_card:
-                self.batch_selector_card.destroy()
-
-            # Clear account widgets and variables
-            self.batch_scraping_widgets.clear()
-            self.selected_accounts.clear()
-
-            # Find the parent frame where batch selector was
-            # Need to recreate in the right position
-            if hasattr(self, 'main_frame'):
-                # Recreate the batch selector with updated accounts from config
-                self.create_batch_account_selector_card(self.main_frame)
-
-                # Update the view
-                self.root.update()
-                self.log_message("✓ Đã làm mới danh sách tài khoản", "INFO")
-            else:
-                self.log_message("⚠ Không tìm thấy main_frame để làm mới selector", "WARNING")
-        except Exception as e:
-            self.log_message(f"Lỗi làm mới danh sách tài khoản: {str(e)}", "ERROR")
+            tk.Button(row, text="➕ New Account", command=self.on_add_new_account, bg=ModernColors.ACCENT, fg="white", relief=tk.FLAT, padx=10, pady=5).pack(side="left")
+        
+        # Status Label
+        self.account_status_label = tk.Label(content, text="Select an account to manage", font=("Segoe UI", 9, "italic"), bg=ModernColors.BG_CARD, fg=ModernColors.TEXT_SECONDARY)
+        self.account_status_label.pack(anchor="w", pady=(5, 0))
 
     def update_text_widget(self, text_widget, content):
         """Helper function to update disabled text widget"""
@@ -1078,22 +651,6 @@ class YouTubeScraperGUI:
             bd=0
         )
         deselect_all_btn.pack(side="left", padx=(0, 15))
-
-        # Scrape Selected button - LARGER and more prominent
-        scrape_selected_btn = tk.Button(
-            buttons_frame,
-            text="🚀 Scrape Selected Accounts",
-            command=self.start_batch_scraping,
-            font=("Segoe UI", 14, "bold"),
-            bg=ModernColors.SUCCESS,
-            fg="white",
-            padx=30,
-            pady=15,
-            relief=tk.FLAT,
-            bd=0,
-            cursor="hand2"
-        )
-        scrape_selected_btn.pack(side="left")
 
         # Store reference
         self.accounts_overview_frame = card_content
@@ -1391,9 +948,9 @@ class YouTubeScraperGUI:
                         if video_ids:
                             self.log_message(f"✓ Found {len(video_ids)} videos in {channel_url}", "SUCCESS")
                             
-                            # Get cookies file for this account (sanitize name)
+                            # Get cookies file for this account (sanitize name) - FIX: Use correct path
                             safe_account_name = re.sub(r'[^\w\-_]', '_', selected_account)
-                            cookies_file = f"profile/youtube_cookies_{safe_account_name}.json"
+                            cookies_file = f"data/cookies/profile/youtube_cookies_{safe_account_name}.json"
                             
                             # Save to config
                             save_to_config(
@@ -1401,6 +958,50 @@ class YouTubeScraperGUI:
                                 video_ids=video_ids,
                                 cookies_file=cookies_file
                             )
+                            
+                            # NEW: Also save to database
+                            try:
+                                with db.session_scope() as session:
+                                    # Find the account
+                                    account = session.query(Account).filter(Account.name == selected_account).first()
+                                    if account:
+                                        # Check if channel already exists
+                                        from src.database.models import Channel, Video
+                                        
+                                        channel = session.query(Channel).filter(
+                                            Channel.account_id == account.id,
+                                            Channel.url == channel_url
+                                        ).first()
+                                        
+                                        if not channel:
+                                            # Create new channel
+                                            channel = Channel(
+                                                account_id=account.id,
+                                                url=channel_url
+                                            )
+                                            session.add(channel)
+                                            session.flush()  # Get channel.id
+                                            self.log_message(f"✓ Channel saved to database", "SUCCESS")
+                                        
+                                        # Add videos to database
+                                        videos_added = 0
+                                        for video_id in video_ids:
+                                            # Check if video exists
+                                            existing_video = session.query(Video).filter(Video.video_id == video_id).first()
+                                            if not existing_video:
+                                                video = Video(
+                                                    video_id=video_id,
+                                                    channel_id=channel.id
+                                                )
+                                                session.add(video)
+                                                videos_added += 1
+                                        
+                                        if videos_added > 0:
+                                            self.log_message(f"✓ Added {videos_added} new videos to database", "SUCCESS")
+                                    else:
+                                        self.log_message(f"⚠ Account '{selected_account}' not found in database", "WARNING")
+                            except Exception as db_error:
+                                self.log_message(f"⚠ Error saving to database: {str(db_error)}", "WARNING")
                             
                             self.log_message(f"✓ Saved to account: {selected_account}", "SUCCESS")
                         else:
@@ -1450,24 +1051,180 @@ class YouTubeScraperGUI:
         except Exception as e:
             self.log_message(f"⚠ Error refreshing overview: {str(e)}", "WARNING")
 
-    def start_batch_scraping(self):
-        """Start scraping for selected accounts"""
-        # Get selected accounts
-        selected = [name for name, var in self.selected_accounts.items() if var.get()]
+    def create_login_settings_card(self, parent):
+        """Tạo card cài đặt đăng nhập"""
+        if CUSTOM_TK_AVAILABLE:
+            card = ctk.CTkFrame(parent, fg_color="transparent")
+        else:
+            card = tk.Frame(parent, bg=ModernColors.BG_DARK)
+        card.pack(fill="x", pady=(0, 10))
         
-        if not selected:
-            self.log_message("⚠ No accounts selected for scraping", "WARNING")
-            return
+        # Checkbox show browser
+        self.show_browser_var = tk.BooleanVar(value=True)
         
-        self.log_message(f"🚀 Starting batch scraping for {len(selected)} account(s)...", "INFO")
+        if CUSTOM_TK_AVAILABLE:
+            chk = ctk.CTkCheckBox(
+                card,
+                text="Show Browser (Keep visible for debugging)",
+                variable=self.show_browser_var,
+                font=ctk.CTkFont(size=12),
+                text_color=ModernColors.TEXT_SECONDARY
+            )
+        else:
+            chk = tk.Checkbutton(
+                card,
+                text="Show Browser (Keep visible for debugging)",
+                variable=self.show_browser_var,
+                font=("Segoe UI", 10),
+                bg=ModernColors.BG_DARK,
+                fg=ModernColors.TEXT_SECONDARY,
+                selectcolor=ModernColors.BG_DARK,
+                activebackground=ModernColors.BG_DARK,
+                activeforeground=ModernColors.TEXT_SECONDARY
+            )
+        chk.pack(anchor="w", padx=20)
+
+    def create_control_section(self, parent):
+        """Tạo section điều khiển với buttons đẹp - Consolidated"""
+        if CUSTOM_TK_AVAILABLE:
+            control_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        else:
+            control_frame = tk.Frame(parent, bg=ModernColors.BG_DARK)
+        control_frame.pack(fill="x", pady=(0, 20))
         
-        # Use existing scraping logic
-        # This will be implemented using the existing start_scraping method
-        # For now, just log
-        for account_name in selected:
-            self.log_message(f"  → {account_name}", "INFO")
+        # Buttons container
+        if CUSTOM_TK_AVAILABLE:
+            buttons_container = ctk.CTkFrame(control_frame, fg_color="transparent")
+        else:
+            buttons_container = tk.Frame(control_frame, bg=ModernColors.BG_DARK)
+        buttons_container.pack()
         
-        self.log_message("ℹ Batch scraping will be implemented using existing scraping logic", "INFO")
+        # Button style helper
+        def create_button(parent, text, command, bg_color, hover_color, width=180):
+            if CUSTOM_TK_AVAILABLE:
+                return ctk.CTkButton(
+                    parent,
+                    text=text,
+                    command=command,
+                    height=48,
+                    width=width,
+                    font=ctk.CTkFont(size=14, weight="bold"),
+                    fg_color=bg_color,
+                    hover_color=hover_color,
+                    corner_radius=10
+                )
+            else:
+                return tk.Button(
+                    parent,
+                    text=text,
+                    command=command,
+                    font=("Segoe UI", 12, "bold"),
+                    bg=bg_color,
+                    fg="white",
+                    activebackground=hover_color,
+                    activeforeground="white",
+                    relief=tk.FLAT,
+                    bd=0,
+                    padx=25,
+                    pady=12,
+                    cursor="hand2"
+                )
+
+        # Row 1: Main Actions
+        if CUSTOM_TK_AVAILABLE:
+            row1 = ctk.CTkFrame(buttons_container, fg_color="transparent")
+        else:
+            row1 = tk.Frame(buttons_container, bg=ModernColors.BG_DARK)
+        row1.pack(pady=5)
+
+        # 1. Get Video List (for current account/channel)
+        # Note: User wants "Only 1 button to scrape, getvideo, stop, clear log"
+        # But "Get Video List" usually applies to the "Add Channel" section.
+        # Since we have "Get All Videos" in the channel management card, maybe we don't need it here?
+        # The user said "The duplicate button Get Video List... remove it".
+        # So I will NOT add "Get Video List" here if it's already in the channel card.
+        # BUT, the user said "The main button must in the last of GUI".
+        # Let's add "Scrape Selected Accounts" as the primary action here.
+
+        # Scrape Button
+        self.start_btn = create_button(
+            row1,
+            "🚀 Scrape Selected Accounts",
+            self.start_batch_scraping,
+            ModernColors.SUCCESS,
+            "#00CC66",
+            width=250
+        )
+        self.start_btn.pack(side="left", padx=10)
+
+        # Stop Button
+        self.stop_btn = create_button(
+            row1,
+            "⏹️ Stop",
+            self.stop_process,
+            ModernColors.ERROR,
+            "#CC0000",
+            width=150
+        )
+        self.stop_btn.pack(side="left", padx=10)
+        self.stop_btn.configure(state="disabled")
+
+        # Clear Log Button
+        clear_btn = create_button(
+            row1,
+            "🧹 Clear Log",
+            self.clear_log,
+            ModernColors.SECONDARY,
+            "#475569",
+            width=150
+        )
+        clear_btn.pack(side="left", padx=10)
+
+    def create_progress_section(self, parent):
+        """Tạo section progress bar"""
+        if CUSTOM_TK_AVAILABLE:
+            progress_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        else:
+            progress_frame = tk.Frame(parent, bg=ModernColors.BG_DARK)
+        progress_frame.pack(fill="x", pady=(0, 20), padx=20)
+        
+        # Label
+        if CUSTOM_TK_AVAILABLE:
+            self.progress_label = ctk.CTkLabel(
+                progress_frame,
+                text="Ready to start...",
+                font=ctk.CTkFont(size=12),
+                text_color=ModernColors.TEXT_SECONDARY
+            )
+        else:
+            self.progress_label = tk.Label(
+                progress_frame,
+                text="Ready to start...",
+                font=("Segoe UI", 10),
+                bg=ModernColors.BG_DARK,
+                fg=ModernColors.TEXT_SECONDARY
+            )
+        self.progress_label.pack(anchor="w", pady=(0, 5))
+        
+        # Progress bar
+        if CUSTOM_TK_AVAILABLE:
+            self.progress_bar = ctk.CTkProgressBar(
+                progress_frame,
+                height=12,
+                corner_radius=6,
+                fg_color=ModernColors.BG_CARD,
+                progress_color=ModernColors.PRIMARY
+            )
+            self.progress_bar.set(0)
+        else:
+            self.progress_bar = ttk.Progressbar(
+                progress_frame,
+                orient="horizontal",
+                mode="determinate"
+            )
+        self.progress_bar.pack(fill="x")
+
+
 
 
 
@@ -2258,10 +2015,10 @@ class YouTubeScraperGUI:
 3. Sau khi đăng nhập thành công, quay lại đây
 4. Nhấn nút "✅ Đã đăng nhập xong" để tiếp tục
 
-⚠️ Lưu ý: 
+[!] Lưu ý: 
 - Đảm bảo đăng nhập đúng tài khoản có quyền truy cập kênh YouTube
 - Không đóng trình duyệt Chrome cho đến khi hoàn thành
-- Nếu gặp lỗi, nhấn "❌ Hủy" và thử lại""")
+- Nếu gặp lỗi, nhấn "X Hủy" và thử lại""")
         instructions.config(state="disabled")
 
         # Button frame
@@ -2378,84 +2135,216 @@ class YouTubeScraperGUI:
                     pass
 
     def init_chrome_driver_for_login(self, headless=False):
-        """Khởi tạo Chrome driver cho đăng nhập"""
+        """Khởi tạo Chrome driver cho đăng nhập - Windows Compatible"""
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options
         from selenium.webdriver.chrome.service import Service
         import tempfile
+        import platform
+        import shutil
 
         options = Options()
 
-        # Các tham số cơ bản để tránh crash
+        # ===== STEALTH MODE - Bypass Google Bot Detection =====
+        # These options make Chrome appear as a normal browser, not automated
+        
+        # Remove automation indicators
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+        
+        # Add preferences to appear more human-like
+        prefs = {
+            "credentials_enable_service": False,
+            "profile.password_manager_enabled": False,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.managed_default_content_settings.images": 1,
+        }
+        options.add_experimental_option("prefs", prefs)
+        
+        # User agent - use a real, recent Chrome user agent
+        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
+        
+        # Disable blink features that expose automation
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        
+        # ===== Stability Options =====
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
         options.add_argument('--disable-software-rasterizer')
+        
+        # ===== Performance Options =====
         options.add_argument('--disable-background-timer-throttling')
         options.add_argument('--disable-backgrounding-occluded-windows')
         options.add_argument('--disable-renderer-backgrounding')
         options.add_argument('--disable-features=TranslateUI')
         options.add_argument('--disable-ipc-flooding-protection')
-
-        # Tham số để tránh conflict với Chrome đang chạy
+        
+        # ===== Avoid Conflicts =====
         options.add_argument('--disable-extensions')
         options.add_argument('--disable-plugins')
         options.add_argument('--disable-plugins-discovery')
-
-        # Sử dụng profile tạm thời để tránh conflict
+        
+        # Use a temporary profile to avoid conflicts
         temp_profile_dir = tempfile.mkdtemp(prefix='chrome_profile_')
         options.add_argument(f'--user-data-dir={temp_profile_dir}')
-
-        # Tham số để chạy ổn định trên Windows
-        options.add_argument('--remote-debugging-port=9222')
-        options.add_argument('--disable-web-security')
-        options.add_argument('--allow-running-insecure-content')
-
+        
+        # ===== Window Settings =====
         if headless:
-            options.add_argument('--headless')
+            options.add_argument('--headless=new')  # Use new headless mode
+            options.add_argument('--window-size=1920,1080')
         else:
-            options.add_argument('--window-size=1200,800')
-
-        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-
-        # Thêm experimental options để tránh crash
-        options.add_experimental_option("useAutomationExtension", False)
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_argument('--start-maximized')
+        
+        # ===== Additional Stealth Options =====
+        # Disable automation flags
+        options.add_argument('--disable-blink-features')
+        options.add_argument('--disable-infobars')
+        
+        # Suppress logging
+        options.add_argument('--log-level=3')
+        options.add_argument('--silent')
+        
+        # Language and locale
+        options.add_argument('--lang=en-US,en')
+        options.add_argument('--accept-lang=en-US,en')
 
         driver = None
+        current_platform = platform.system()
+        
         try:
-            self.log_message("Đang khởi tạo Chrome driver với các tham số tối ưu...", "INFO")
+            self.log_message(f"Đang khởi tạo Chrome driver trên {current_platform}...", "INFO")
 
             # Thử khởi tạo Chrome driver
             try:
                 driver = webdriver.Chrome(options=options)
+                self.log_message("✓ Chrome driver khởi tạo thành công (mặc định)", "SUCCESS")
             except Exception as chrome_error:
-                self.log_message(f"Không thể khởi tạo Chrome driver thông thường, thử với Service: {str(chrome_error)}", "WARNING")
+                self.log_message(f"Không thể khởi tạo Chrome driver thông thường: {str(chrome_error)[:100]}", "WARNING")
 
-                # Thử với Service để chỉ định path chromedriver
+                # Thử với webdriver-manager - FIX cho Windows
                 try:
                     from webdriver_manager.chrome import ChromeDriverManager
-                    service = Service(ChromeDriverManager().install())
+                    from webdriver_manager.core.os_manager import ChromeType
+                    
+                    self.log_message("Đang tải ChromeDriver phù hợp với hệ điều hành...", "INFO")
+                    
+                    # Clear cache nếu đang trên Windows để tránh dùng driver Linux cũ
+                    if current_platform == "Windows":
+                        try:
+                            cache_path = os.path.join(os.path.expanduser("~"), ".wdm")
+                            if os.path.exists(cache_path):
+                                self.log_message("Đang xóa cache ChromeDriver cũ...", "INFO")
+                                shutil.rmtree(cache_path, ignore_errors=True)
+                                self.log_message("✓ Đã xóa cache ChromeDriver", "SUCCESS")
+                        except Exception as cache_error:
+                            self.log_message(f"Không thể xóa cache: {str(cache_error)}", "WARNING")
+                    
+                    # Download và cài đặt ChromeDriver mới
+                    driver_path = ChromeDriverManager().install()
+                    self.log_message(f"✓ ChromeDriver đã được tải về: {driver_path}", "SUCCESS")
+                    
+                    service = Service(driver_path)
                     driver = webdriver.Chrome(service=service, options=options)
                     self.log_message("✓ Đã tự động download và sử dụng ChromeDriver mới", "SUCCESS")
+                    
                 except ImportError:
-                    self.log_message("⚠ webdriver-manager không có sẵn, hãy cài đặt: pip install webdriver-manager", "WARNING")
-                    # Thử một lần nữa với Chrome driver mặc định
-                    driver = webdriver.Chrome(options=options)
+                    self.log_message("⚠ webdriver-manager không có sẵn", "WARNING")
+                    self.log_message("Đang cài đặt webdriver-manager...", "INFO")
+                    try:
+                        import subprocess
+                        subprocess.check_call([sys.executable, "-m", "pip", "install", "webdriver-manager"])
+                        self.log_message("✓ Đã cài đặt webdriver-manager", "SUCCESS")
+                        
+                        # Thử lại sau khi cài đặt
+                        from webdriver_manager.chrome import ChromeDriverManager
+                        driver_path = ChromeDriverManager().install()
+                        service = Service(driver_path)
+                        driver = webdriver.Chrome(service=service, options=options)
+                        self.log_message("✓ ChromeDriver đã được cài đặt và khởi tạo", "SUCCESS")
+                    except Exception as install_error:
+                        self.log_message(f"Không thể cài đặt webdriver-manager: {str(install_error)}", "ERROR")
+                        raise chrome_error
+                        
                 except Exception as wm_error:
                     self.log_message(f"Lỗi với webdriver-manager: {str(wm_error)}", "ERROR")
-                    raise chrome_error  # Raise lỗi ban đầu
+                    
+                    # Hướng dẫn người dùng
+                    if current_platform == "Windows":
+                        self.log_message("", "INFO")
+                        self.log_message("=== HƯỚNG DẪN SỬA LỖI ===", "WARNING")
+                        self.log_message("1. Đóng ứng dụng này", "INFO")
+                        self.log_message("2. Mở Command Prompt và chạy:", "INFO")
+                        self.log_message("   pip uninstall webdriver-manager -y", "INFO")
+                        self.log_message("   pip install webdriver-manager", "INFO")
+                        self.log_message("3. Khởi động lại ứng dụng", "INFO")
+                        self.log_message("========================", "WARNING")
+                    
+                    raise chrome_error
 
-            # Thực hiện một số lệnh để đảm bảo driver hoạt động
-            driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-                'source': '''
-                    Object.defineProperty(navigator, 'webdriver', {
-                        get: () => undefined,
-                    });
-                '''
-            })
+            # Execute advanced stealth scripts to hide automation
+            try:
+                # Script 1: Override navigator.webdriver
+                driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+                    'source': '''
+                        // Override the navigator.webdriver property
+                        Object.defineProperty(navigator, 'webdriver', {
+                            get: () => undefined,
+                        });
+                        
+                        // Override the navigator.plugins to appear more real
+                        Object.defineProperty(navigator, 'plugins', {
+                            get: () => [1, 2, 3, 4, 5],
+                        });
+                        
+                        // Override the navigator.languages
+                        Object.defineProperty(navigator, 'languages', {
+                            get: () => ['en-US', 'en'],
+                        });
+                        
+                        // Add Chrome object if not present
+                        if (!window.chrome) {
+                            window.chrome = {
+                                runtime: {},
+                            };
+                        }
+                        
+                        // Override permissions
+                        const originalQuery = window.navigator.permissions.query;
+                        window.navigator.permissions.query = (parameters) => (
+                            parameters.name === 'notifications' ?
+                                Promise.resolve({ state: Notification.permission }) :
+                                originalQuery(parameters)
+                        );
+                    '''
+                })
+                
+                # Script 2: Remove automation indicators from window
+                driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+                    'source': '''
+                        // Remove Selenium indicators
+                        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+                        
+                        // Override toString to hide automation
+                        const originalToString = Function.prototype.toString;
+                        Function.prototype.toString = function() {
+                            if (this === window.navigator.permissions.query) {
+                                return 'function query() { [native code] }';
+                            }
+                            return originalToString.call(this);
+                        };
+                    '''
+                })
+                
+                self.log_message("✓ Stealth scripts injected successfully", "SUCCESS")
+                
+            except Exception as cdp_error:
+                self.log_message(f"⚠ Could not inject stealth scripts: {str(cdp_error)[:50]}", "WARNING")
+                self.log_message("Continuing anyway - login may still work", "INFO")
 
-            self.log_message("✓ Chrome driver khởi tạo thành công", "SUCCESS")
+            self.log_message("✓ Chrome driver đã sẵn sàng sử dụng!", "SUCCESS")
             return driver
 
         except Exception as e:
@@ -2468,17 +2357,15 @@ class YouTubeScraperGUI:
 
             # Xóa profile tạm thời
             try:
-                import shutil
                 if os.path.exists(temp_profile_dir):
                     shutil.rmtree(temp_profile_dir, ignore_errors=True)
             except:
                 pass
 
-            self.log_message(f"Lỗi khởi tạo Chrome driver: {str(e)}", "ERROR")
+            self.log_message(f"✗ Lỗi khởi tạo Chrome driver: {str(e)}", "ERROR")
             raise
 
     def create_control_section(self, parent):
-        """Tạo section điều khiển với buttons đẹp"""
         if CUSTOM_TK_AVAILABLE:
             control_frame = ctk.CTkFrame(parent, fg_color="transparent")
         else:
@@ -3009,6 +2896,12 @@ class YouTubeScraperGUI:
             # === MODIFIED: Load first account as default for multi-account support ===
             account_names = self.get_account_names()
             if account_names:
+                # Update dropdown values
+                if CUSTOM_TK_AVAILABLE:
+                    self.account_dropdown.configure(values=account_names)
+                else:
+                    self.account_dropdown.configure(values=account_names)
+
                 # Select first account as default
                 self.account_var.set(account_names[0])
                 self.on_account_changed()
@@ -4141,7 +4034,6 @@ class YouTubeScraperGUI:
         self.root.mainloop()
     
     def on_closing(self):
-        """Xử lý khi đóng ứng dụng"""
         try:
             # Safely close any open dialogs or threads
             if hasattr(self, 'scraper') and self.scraper:
@@ -4158,7 +4050,6 @@ class YouTubeScraperGUI:
 
 
 def main():
-    """Hàm main"""
     try:
         app = YouTubeScraperGUI()
         app.run()

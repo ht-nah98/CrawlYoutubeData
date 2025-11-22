@@ -1,0 +1,60 @@
+{
+  "accounts": [
+    {
+      "name": "Beau",
+      "cookies_file": "data/cookies/profile\\youtube_cookies_Beau.json",
+      "channels": [
+        {
+          "url": "https://www.youtube.com/channel/UCMfb66aHu95LPc2cDGCtkRQ",
+          "video_ids": [
+            "5HoYlSM3yto",
+            "uLcT5S8gQ04",
+            "UeGewCxNwYg",
+            "Ued9wBBDWFE",
+            "EXL9S2vw4X8",
+            "koeAlLlahsg",
+            "dbEQBPb-EQk",
+            "tP5M3gfnCUs",
+            "zsBpZxFwVBg",
+            "CrFT1rx5Jdc",
+            "ygzB3TJl-TM",
+            "YQpFLy5PiD4",
+            "6TQOdlRliQI",
+            "YZ2zUy7m9dE",
+            "wl3mXIgBf6w",
+            "V8-vSJPqg8U",
+            "7xolqhsbxBg",
+            "prRBwqN9mwg",
+            "nJSYSxZsTFQ",
+            "LvKYOM7-y0A",
+            "tXgddCP4QiU",
+            "0z1pG7sNFnE",
+            "tgDYCyBuB0Y",
+            "CRpLtP6uAcA",
+            "AKNP3b7ksmY",
+            "s2m1LxPuEYQ",
+            "OkHD4vjoZWA",
+            "aCgwUEwnHaY",
+            "qDNXW5XOv0k",
+            "7Ss-7JXtRzI",
+            "2bovVGBQGuA",
+            "MMaMmx-tuZ0",
+            "1o0nksJEgJ0"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tien Anh",
+      "cookies_file": "data/cookies/profile\\youtube_cookies_Tien_Anh.json",
+      "channels": [
+        {
+          "url": "https://www.youtube.com/@anhhatien9987",
+          "video_ids": [
+            "WKnpQ2VW9SE"
+          ]
+        }
+      ]
+    }
+  ]
+}

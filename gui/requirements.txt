@@ -1,0 +1,10 @@
+# GUI Framework
+customtkinter==5.2.0
+Pillow==10.4.0
+darkdetect==0.8.0
+
+# HTTP Client
+requests==2.31.0
+
+# Utilities
+python-dotenv==1.0.0
