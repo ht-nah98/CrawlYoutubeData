@@ -103,9 +103,30 @@ dmypy.json
 # Pyre
 .pyre/
 
-# Project Specific
-data/cookies/*.json
-data/*.json
+# Project Specific - SENSITIVE DATA
+# Configuration files
+config.json
+gui/config.json
+*.config.json
+settings.json
+settings.local.json
+.claude/settings.local.json
+
+# All data directories and files
+data/
+data/**/*
+data/cookies/
+data/cookies/**/*
+*.cookie
+*.cookies
+
+# Profile and credential files
+profile/
+profiles/
+**/profile/**
+**/profiles/**
+
+# Temporary and cache
 *.tmp
 *.bak
 *.cache
