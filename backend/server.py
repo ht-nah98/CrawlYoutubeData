@@ -23,11 +23,14 @@ from src.database.config import DatabaseConfig
 
 def print_banner():
     """Print server startup banner"""
+    is_production = os.getenv('PRODUCTION', 'false').lower() == 'true'
+    env = "Production" if is_production else "Development"
+    
     print("=" * 70)
     print("🚀 YouTube Analytics Backend Server")
     print("=" * 70)
     print(f"Version: 1.0.0")
-    print(f"Environment: Development")
+    print(f"Environment: {env}")
     print("=" * 70)
 
 
@@ -63,12 +66,18 @@ def main():
         print_banner()
         print_info()
         
+        # Get configuration from environment
+        is_production = os.getenv('PRODUCTION', 'false').lower() == 'true'
+        api_host = os.getenv('API_HOST', '0.0.0.0')
+        api_port = int(os.getenv('API_PORT', '8000'))
+        reload = not is_production  # Disable reload in production
+        
         # Start uvicorn server
         uvicorn.run(
             "src.api.main:app",
-            host="0.0.0.0",
-            port=8000,
-            reload=True,
+            host=api_host,
+            port=api_port,
+            reload=reload,
             log_level="info",
             access_log=True,
         )
